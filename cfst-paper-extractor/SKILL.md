@@ -1,6 +1,6 @@
 ---
 name: cfst-paper-extractor
-description: Extract specimen-level data from processed CFST paper PDFs into schema-v2.2 JSON, validate ordinary-CFST inclusion, provenance, and physical plausibility, orchestrate isolated one-paper workers, and publish canonical JSON outputs. Use when Codex needs to work from `processed/` PDF files, repair or review CFST JSON outputs.
+description: Extract CFST column specimen data from processed paper PDFs into schema-v2.3 JSON with shared_context, series_definitions, specimen-level ordinary tagging, provenance, and physical plausibility checks; orchestrate isolated one-paper workers and publish canonical outputs. Use when Codex needs to extract, repair, validate, or review CFST column JSON from `processed/` PDF files.
 ---
 
 # CFST Paper Extractor
@@ -305,8 +305,9 @@ python .codex/skills/cfst-paper-extractor/scripts/checkpoint_output_commits.py \
 - Read values directly from the rendered PDF page images via `view_image`. The PDF page image is the single source of truth for all specimen values.
 - Resolve `fc_basis` by following `references/extraction-rules.md` `## 8. Concrete-Strength Basis Rules`. Before interpreting symbols such as `fck`, `fc`, `f'c`, or `Fc`, first search nearby material/property text, table headers, and footnotes for code-defined grade notation such as Chinese `C30`, `C40`, `C50`, `C60` or Eurocode `C60/75`. In Chinese GB/T context, those `Cxx` grades sit above nearby bare `fck` / `fc` symbols in the priority order; when the reported measured value clearly matches the cube-strength system, keep `fc_type` consistent with that stored value instead of mirroring sloppy symbol usage. Do not assign `fc_basis` without consulting those rules.
 - Keep `fc_type` in validator-compatible form only: `cube`, `cylinder`, `prism`, `unknown`, or sized forms such as `Cube 150` or `Cylinder 100x200`. Never store symbolic notation like `fck/fcu/f'c/fc` or explanatory phrases in `fc_type`.
-- Exclude non-CFST controls such as hollow steel tube / bare steel tube / empty steel tube specimens before building the kept CFST specimen universe.
-- Keep ordinary CFST rows in `Group_A` / `Group_B` / `Group_C`. Move non-ordinary CFST rows into top-level `excluded_specimens` bundles grouped by shared exclusion reason and locator evidence.
+- Exclude non-CFST controls such as hollow steel tube / bare steel tube / empty steel tube specimens before building the kept CFST column specimen universe.
+- Keep all kept CFST column rows in `Group_A` / `Group_B` / `Group_C`. Tag ordinary rows with `is_ordinary=true` and `ordinary_exclusion_reasons=[]`; keep non-ordinary rows in the same groups with `is_ordinary=false` and non-empty `ordinary_exclusion_reasons`.
+- Derive `shared_context` only from values that are truly common to all kept rows with explicit evidence; use `series_definitions[*].shared_context`, `context_overrides`, or direct specimen fields for mixed papers.
 - Keep `material_modifiers` present on every ordinary row even when it is `[]`. In published ordinary rows, `[]` is the explicit proof that the modifier scan was performed and no active modifier was found; do not omit the field as redundant.
 - When a repeated-specimen group reports only one average result row, expand it with the canonical `G-1 ... G-q` naming rule and record the average-result nature directly in `source_evidence`.
 - Before final JSON assembly, build exactly one non-canonical scratch file at `output/tmp/<paper_id>/_scratch/extraction_draft.yaml`; do not write a second JSON artifact on disk.
@@ -318,12 +319,12 @@ python .codex/skills/cfst-paper-extractor/scripts/checkpoint_output_commits.py \
 
 ### Output shape
 
-- Produce the schema-v2.2 top-level keys `schema_version`, `paper_id`, `is_valid`, `is_ordinary_cfst`, `reason`, `ordinary_filter`, `ref_info`, `paper_level`, `Group_A`, `Group_B`, `Group_C`, and `excluded_specimens`.
-- Treat `is_valid=false` as an unusable paper with empty `Group_A` / `Group_B` / `Group_C` and empty `excluded_specimens`.
-- Treat `is_valid=true` as usable. Keep ordinary CFST specimen rows in `Group_A` / `Group_B` / `Group_C`; summarize non-ordinary CFST rows in grouped top-level `excluded_specimens` bundles.
-- Tag the full kept CFST specimen universe with ordinary decisions using the specimen-level evaluation in `references/extraction-rules.md` section 2 before final JSON assembly.
-- Derive `is_ordinary_cfst` from the ordinary rows kept in `Group_A` / `Group_B` / `Group_C`: `true` when at least one kept row has `is_ordinary=true`.
-- `ordinary_filter.total_count` and `paper_level.expected_specimen_count` must count all kept CFST specimens: ordinary group rows plus the member count represented by `excluded_specimens[*].specimen_labels`.
+- Produce the schema-v2.3 top-level keys `schema_version`, `paper_id`, `is_valid`, `is_ordinary_cfst`, `reason`, `ordinary_filter`, `ref_info`, `paper_level`, `shared_context`, `series_definitions`, `Group_A`, `Group_B`, and `Group_C`.
+- Treat `is_valid=false` as an unusable paper with empty `shared_context`, empty `series_definitions`, and empty `Group_A` / `Group_B` / `Group_C`.
+- Treat `is_valid=true` as usable. Keep both ordinary and non-ordinary kept CFST column rows in `Group_A` / `Group_B` / `Group_C`; do not create top-level `excluded_specimens`.
+- Tag the full kept CFST column specimen universe with ordinary decisions using the specimen-level evaluation in `references/extraction-rules.md` section 2 before final JSON assembly.
+- Derive `is_ordinary_cfst` from the kept rows in `Group_A` / `Group_B` / `Group_C`: `true` when at least one kept row has `is_ordinary=true`.
+- `ordinary_filter.total_count` and `paper_level.expected_specimen_count` must count the kept rows in `Group_A` / `Group_B` / `Group_C` only.
 - Optional specimen trace fields `reported_group_label` and `replicate_index` may be populated when one reported paper label expands into multiple specimen rows.
 - Keep worker output in `tmp/<paper_id>/<paper_id>.json` only.
 - Let the parent publish the final JSON into `output/<paper_id>.json`; workers must never write final outputs directly.
@@ -351,7 +352,7 @@ python .codex/skills/cfst-paper-extractor/scripts/bootstrap_git_repo.py \
 ## Use These Bundled Scripts
 
 - `scripts/prepare_batch.py`: preferred entry point; discover processed PDF files, verify readability, and write manifests/state for worker orchestration.
-- `scripts/validate_single_output.py`: sandbox-only validator for one worker-local schema-v2.2 JSON plus its authoritative scratch YAML; checks shape, grouped excluded-specimen bundles, scratch/JSON consistency, ordinary-filter consistency, locator wording, and rounding.
+- `scripts/validate_single_output.py`: sandbox-only validator for one worker-local schema-v2.3 JSON plus its authoritative scratch YAML; checks shape, context inheritance, scratch/JSON ordinary-decision consistency, ordinary-filter consistency, locator wording, and rounding.
 - `scripts/publish_validated_output.py`: revalidate worker outputs, publish final JSON, append a publish log, optionally publish only selected `--paper-ids`, and update `batch_state.json` when `--batch-state` is provided.
 - `scripts/update_batch_state.py`: update one paper entry in `batch_state.json` from the parent orchestration flow.
 - `scripts/git_worktree_isolation.py`: create and remove per-paper git worktrees. In the parent flow, `create` also returns `output_host_path`, the persistent host directory that should be bound into `worker_sandbox.py`.

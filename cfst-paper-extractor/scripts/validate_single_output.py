@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate one CFST extraction JSON against schema-v2.2 rules.
+"""Validate one CFST extraction JSON against schema-v2.3 rules.
 
 This strict skill variant requires the validator to run inside worker_sandbox.py.
 """
@@ -26,8 +26,9 @@ def _assert_sandbox() -> None:
         print("[FAIL] This script must run inside worker_sandbox.py (CFST_SANDBOX=1 not set).", file=sys.stderr)
         raise SystemExit(1)
 
+
 EPS = 1e-3
-SCHEMA_VERSION = "cfst-paper-extractor-v2.2"
+SCHEMA_VERSION = "cfst-paper-extractor-v2.3"
 
 TOP_LEVEL_KEYS = {
     "schema_version",
@@ -38,46 +39,22 @@ TOP_LEVEL_KEYS = {
     "ordinary_filter",
     "ref_info",
     "paper_level",
+    "shared_context",
+    "series_definitions",
     "Group_A",
     "Group_B",
     "Group_C",
-    "excluded_specimens",
 }
 
-EXCLUDED_BUNDLE_KEYS = {
-    "ordinary_exclusion_reasons",
-    "specimen_labels",
-    "source_evidence",
-    "reason_evidence",
-}
-
-REASON_EVIDENCE_KEYS = {
-    "page",
-    "table_id",
-    "figure_id",
-    "table_image",
-    "setup_image",
-    "source",
-    "raw_texts",
-}
-
-SPECIMEN_KEYS = {
+SPECIMEN_REQUIRED_KEYS = {
     "ref_no",
     "specimen_label",
-    "section_shape",
-    "loading_mode",
-    "loading_pattern",
-    "boundary_condition",
+    "is_ordinary",
+    "ordinary_exclusion_reasons",
     "fc_value",
-    "fc_type",
-    "fc_basis",
     "fy",
     "fcy150",
     "r_ratio",
-    "steel_type",
-    "concrete_type",
-    "is_ordinary",
-    "ordinary_exclusion_reasons",
     "b",
     "h",
     "t",
@@ -87,8 +64,33 @@ SPECIMEN_KEYS = {
     "e2",
     "n_exp",
     "source_evidence",
+}
+
+ROW_CONTEXT_KEYS = {
+    "section_shape",
+    "loading_mode",
+    "loading_pattern",
+    "boundary_condition",
+    "fc_type",
+    "fc_basis",
+    "steel_type",
+    "concrete_type",
     "material_modifiers",
 }
+
+INHERITABLE_CONTEXT_KEYS = ROW_CONTEXT_KEYS | {"test_temperature", "loading_regime"}
+
+SPECIMEN_OPTIONAL_KEYS = ROW_CONTEXT_KEYS | {
+    "reported_group_label",
+    "replicate_index",
+    "quality_flags",
+    "series_id",
+    "context_overrides",
+    "specimen_note",
+}
+
+SERIES_DEFINITION_KEYS = {"series_id", "shared_context", "description", "notes"}
+CONTEXT_KEYS = INHERITABLE_CONTEXT_KEYS
 
 NUMERIC_FIELDS = {"fc_value", "fy", "r_ratio", "b", "h", "t", "r0", "L", "e1", "e2", "n_exp"}
 NULLABLE_NUMERIC_FIELDS = {"fcy150"}
@@ -102,7 +104,7 @@ SECTION_SHAPES = {
     "obround",
 }
 PAPER_LOADING_MODES = {"axial", "eccentric", "mixed", "unknown"}
-ROW_LOADING_MODES = {"axial", "eccentric"}
+ROW_LOADING_MODES = {"axial", "eccentric", "unknown"}
 TEST_TEMPERATURES = {"ambient", "elevated", "post_fire", "unknown"}
 LOADING_REGIMES = {"static", "dynamic", "impact", "unknown"}
 LOADING_PATTERNS = {"monotonic", "cyclic", "repeated", "mixed", "unknown"}
@@ -209,7 +211,10 @@ SOURCE_LOCATOR_PATTERN = re.compile(
 )
 SCRATCH_DECISION_KEYS = {
     "label",
+    "section_shape",
+    "steel_type",
     "concrete_type",
+    "loading_pattern",
     "test_temperature",
     "loading_regime",
     "durability_conditioning",
@@ -256,6 +261,37 @@ def _has_control_chars(value: str) -> bool:
     return any(ord(ch) < 32 for ch in value)
 
 
+def _canonical_string(value: Any) -> str | None:
+    if not isinstance(value, str):
+        return None
+    normalized = value.strip()
+    return normalized or None
+
+
+def _validate_canonical_string(
+    value: Any,
+    tag: str,
+    errors: list[str],
+    *,
+    allow_null: bool = False,
+) -> str | None:
+    if value is None:
+        if allow_null:
+            return None
+        errors.append(f"`{tag}` must be string.")
+        return None
+    if not isinstance(value, str):
+        errors.append(f"`{tag}` must be string.")
+        return None
+    normalized = value.strip()
+    if not normalized:
+        errors.append(f"`{tag}` must be non-empty.")
+        return None
+    if value != normalized:
+        errors.append(f"`{tag}` must not have leading or trailing whitespace.")
+    return normalized
+
+
 def _validate_string_list(value: Any, tag: str, errors: list[str]) -> None:
     if not isinstance(value, list):
         errors.append(f"`{tag}` must be list.")
@@ -263,6 +299,9 @@ def _validate_string_list(value: Any, tag: str, errors: list[str]) -> None:
     for idx, item in enumerate(value):
         if not isinstance(item, str):
             errors.append(f"`{tag}[{idx}]` must be string.")
+            continue
+        if item != item.strip():
+            errors.append(f"`{tag}[{idx}]` must not have leading or trailing whitespace.")
 
 
 def _validate_nonempty_line(value: Any, tag: str, errors: list[str]) -> None:
@@ -293,10 +332,13 @@ def _validate_nonempty_string_list(
         if not isinstance(item, str):
             errors.append(f"`{tag}[{idx}]` must be string.")
             continue
-        if not item.strip():
+        stripped = item.strip()
+        if not stripped:
             errors.append(f"`{tag}[{idx}]` must be non-empty.")
             continue
-        normalized.append(item)
+        if item != stripped:
+            errors.append(f"`{tag}[{idx}]` must not have leading or trailing whitespace.")
+        normalized.append(stripped)
     if require_unique and len(set(normalized)) != len(normalized):
         errors.append(f"`{tag}` must not contain duplicates.")
     if require_sorted and normalized != sorted(normalized):
@@ -425,7 +467,6 @@ def _is_valid_fc_type(value: str) -> bool:
 
 
 def _fc_type_implied_basis(fc_type_str: str) -> str | None:
-    """Return the basis implied by fc_type, or None if ambiguous/unknown."""
     lowered = fc_type_str.strip().lower()
     if not lowered or lowered == "unknown":
         return None
@@ -509,15 +550,10 @@ def _validate_ordinary_filter(
         )
         if isinstance(obj["special_factors"], list):
             for idx, item in enumerate(obj["special_factors"]):
-                if (
-                    isinstance(item, str)
-                    and item.strip()
-                    and item not in ORDINARY_ALLOWED_SPECIAL_FACTORS
-                ):
+                if isinstance(item, str) and item.strip() and item not in ORDINARY_ALLOWED_SPECIAL_FACTORS:
                     allowed = ", ".join(sorted(ORDINARY_ALLOWED_SPECIAL_FACTORS))
                     errors.append(
-                        f"`ordinary_filter.special_factors[{idx}]` invalid: {item}. "
-                        f"Allowed values: {allowed}."
+                        f"`ordinary_filter.special_factors[{idx}]` invalid: {item}. Allowed values: {allowed}."
                     )
     if "exclusion_reasons" in obj:
         _validate_string_list(obj["exclusion_reasons"], "ordinary_filter.exclusion_reasons", errors)
@@ -589,75 +625,351 @@ def _validate_paper_level(obj: Any, errors: list[str]) -> None:
         _validate_setup_figure(obj["setup_figure"], errors)
 
 
-def _validate_reason_evidence(tag: str, evidence: Any, errors: list[str]) -> None:
-    if not isinstance(evidence, dict):
-        errors.append(f"`{tag}.reason_evidence` must be an object.")
-        return
-    missing = REASON_EVIDENCE_KEYS - set(evidence.keys())
-    if missing:
-        errors.append(f"`{tag}.reason_evidence` missing keys: {sorted(missing)}")
-    if "page" in evidence and evidence["page"] is not None and not isinstance(evidence["page"], int):
-        errors.append(f"`{tag}.reason_evidence.page` must be integer or null.")
-    for key in ("table_id", "figure_id", "table_image", "setup_image"):
-        if key in evidence and evidence[key] is not None and not isinstance(evidence[key], str):
-            errors.append(f"`{tag}.reason_evidence.{key}` must be string or null.")
-    if "source" in evidence:
-        _validate_nonempty_line(evidence["source"], f"{tag}.reason_evidence.source", errors)
-    if "raw_texts" in evidence:
-        _validate_nonempty_string_list(
-            evidence["raw_texts"],
-            f"{tag}.reason_evidence.raw_texts",
-            errors,
-            require_unique=True,
-        )
-        if isinstance(evidence["raw_texts"], list) and len(evidence["raw_texts"]) == 0:
-            errors.append(f"`{tag}.reason_evidence.raw_texts` must be non-empty.")
-
-
-def _validate_excluded_bundle(idx: int, bundle: Any, errors: list[str], warnings: list[str]) -> None:
-    tag = f"excluded_specimens[{idx}]"
-    if not isinstance(bundle, dict):
-        errors.append(f"`{tag}` must be object.")
+def _validate_context_fragment(value: Any, tag: str, errors: list[str]) -> None:
+    if not isinstance(value, dict):
+        errors.append(f"`{tag}` must be an object.")
         return
 
-    missing = EXCLUDED_BUNDLE_KEYS - set(bundle.keys())
-    if missing:
-        errors.append(f"`{tag}` missing keys: {sorted(missing)}")
+    unknown_keys = sorted(set(value.keys()) - CONTEXT_KEYS)
+    if unknown_keys:
+        errors.append(f"`{tag}` has unsupported keys: {unknown_keys}")
 
-    if "ordinary_exclusion_reasons" in bundle:
-        _validate_nonempty_string_list(
-            bundle["ordinary_exclusion_reasons"],
-            f"{tag}.ordinary_exclusion_reasons",
-            errors,
-            require_unique=True,
-        )
-        if isinstance(bundle["ordinary_exclusion_reasons"], list) and len(bundle["ordinary_exclusion_reasons"]) == 0:
-            errors.append(f"`{tag}.ordinary_exclusion_reasons` must be non-empty.")
+    if "section_shape" in value:
+        section_shape = value["section_shape"]
+        if not isinstance(section_shape, str):
+            errors.append(f"`{tag}.section_shape` must be string.")
+        elif section_shape not in SECTION_SHAPES:
+            errors.append(f"`{tag}.section_shape` invalid: {section_shape}")
 
-    if "specimen_labels" in bundle:
-        _validate_nonempty_string_list(
-            bundle["specimen_labels"],
-            f"{tag}.specimen_labels",
-            errors,
-            require_unique=True,
-            require_sorted=True,
-        )
-        if isinstance(bundle["specimen_labels"], list) and len(bundle["specimen_labels"]) == 0:
-            errors.append(f"`{tag}.specimen_labels` must be non-empty.")
+    if "loading_mode" in value:
+        loading_mode = value["loading_mode"]
+        if not isinstance(loading_mode, str):
+            errors.append(f"`{tag}.loading_mode` must be string.")
+        elif loading_mode not in ROW_LOADING_MODES:
+            errors.append(f"`{tag}.loading_mode` invalid: {loading_mode}")
 
-    if "source_evidence" in bundle:
-        _validate_nonempty_line(bundle["source_evidence"], f"{tag}.source_evidence", errors)
-        if isinstance(bundle["source_evidence"], str):
-            _warn_if_locator_missing(bundle["source_evidence"], f"{tag}.source_evidence", warnings)
+    if "loading_pattern" in value:
+        loading_pattern = value["loading_pattern"]
+        if not isinstance(loading_pattern, str):
+            errors.append(f"`{tag}.loading_pattern` must be string.")
+        elif loading_pattern not in ROW_LOADING_PATTERNS:
+            errors.append(f"`{tag}.loading_pattern` invalid: {loading_pattern}")
 
-    if "reason_evidence" in bundle:
-        _validate_reason_evidence(tag, bundle["reason_evidence"], errors)
+    if "boundary_condition" in value and value["boundary_condition"] is not None and not isinstance(value["boundary_condition"], str):
+        errors.append(f"`{tag}.boundary_condition` must be string or null.")
+
+    if "fc_type" in value:
+        fc_type = value["fc_type"]
+        if not isinstance(fc_type, str):
+            errors.append(f"`{tag}.fc_type` must be string.")
+        else:
+            normalized = fc_type.strip()
+            if not normalized:
+                errors.append(f"`{tag}.fc_type` must be non-empty.")
+            elif FC_TYPE_DISALLOWED_SYMBOL_PATTERN.search(normalized):
+                errors.append(
+                    f"`{tag}.fc_type` must not use symbolic notation like f'c/fcu/fck. Use cube/cylinder/prism or Unknown."
+                )
+            elif not _is_valid_fc_type(normalized):
+                errors.append(
+                    f"`{tag}.fc_type` invalid. Allowed forms: cube/cylinder/prism/Unknown or sized forms like `Cylinder 100x200`."
+                )
+
+    if "fc_basis" in value:
+        fc_basis = value["fc_basis"]
+        if not isinstance(fc_basis, str):
+            errors.append(f"`{tag}.fc_basis` must be string.")
+        elif fc_basis not in FC_BASIS_ALLOWED:
+            errors.append(f"`{tag}.fc_basis` invalid: {fc_basis}")
+
+    if "fc_type" in value and "fc_basis" in value and isinstance(value.get("fc_type"), str) and isinstance(value.get("fc_basis"), str):
+        implied = _fc_type_implied_basis(value["fc_type"])
+        if implied is not None and value["fc_basis"] != "unknown" and implied != value["fc_basis"]:
+            errors.append(
+                f"`{tag}.fc_type` '{value['fc_type']}' implies basis '{implied}' but `fc_basis` is '{value['fc_basis']}'."
+            )
+
+    if "steel_type" in value:
+        steel_type = value["steel_type"]
+        if not isinstance(steel_type, str):
+            errors.append(f"`{tag}.steel_type` must be string.")
+        elif steel_type not in STEEL_TYPES:
+            errors.append(f"`{tag}.steel_type` invalid: {steel_type}")
+
+    if "concrete_type" in value:
+        concrete_type = value["concrete_type"]
+        if not isinstance(concrete_type, str):
+            errors.append(f"`{tag}.concrete_type` must be string.")
+        elif concrete_type not in CONCRETE_TYPES:
+            errors.append(f"`{tag}.concrete_type` invalid: {concrete_type}")
+
+    if "material_modifiers" in value:
+        _validate_string_list(value["material_modifiers"], f"{tag}.material_modifiers", errors)
+
+    if "test_temperature" in value:
+        test_temperature = value["test_temperature"]
+        if not isinstance(test_temperature, str):
+            errors.append(f"`{tag}.test_temperature` must be string.")
+        elif test_temperature not in TEST_TEMPERATURES:
+            errors.append(f"`{tag}.test_temperature` invalid: {test_temperature}")
+
+    if "loading_regime" in value:
+        loading_regime = value["loading_regime"]
+        if not isinstance(loading_regime, str):
+            errors.append(f"`{tag}.loading_regime` must be string.")
+        elif loading_regime not in LOADING_REGIMES:
+            errors.append(f"`{tag}.loading_regime` invalid: {loading_regime}")
+
+
+def _validate_series_definitions(obj: Any, errors: list[str]) -> None:
+    if not isinstance(obj, list):
+        errors.append("`series_definitions` must be list.")
+        return
+
+    series_ids: set[str] = set()
+    for idx, item in enumerate(obj):
+        tag = f"series_definitions[{idx}]"
+        if not isinstance(item, dict):
+            errors.append(f"`{tag}` must be object.")
+            continue
+
+        unknown_keys = sorted(set(item.keys()) - SERIES_DEFINITION_KEYS)
+        if unknown_keys:
+            errors.append(f"`{tag}` has unsupported keys: {unknown_keys}")
+
+        series_id = _validate_canonical_string(item.get("series_id"), f"{tag}.series_id", errors)
+        if series_id is not None:
+            if series_id in series_ids:
+                errors.append(f"`series_definitions` duplicated series_id: {series_id}")
+            series_ids.add(series_id)
+
+        if "shared_context" not in item:
+            errors.append(f"`{tag}.shared_context` is required.")
+        else:
+            _validate_context_fragment(item["shared_context"], f"{tag}.shared_context", errors)
+
+        if "description" in item and item["description"] is not None and not isinstance(item["description"], str):
+            errors.append(f"`{tag}.description` must be string or null.")
+        if "notes" in item:
+            _validate_string_list(item["notes"], f"{tag}.notes", errors)
+
+
+def _build_series_map(payload: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    series_map: dict[str, dict[str, Any]] = {}
+    definitions = payload.get("series_definitions", [])
+    if not isinstance(definitions, list):
+        return series_map
+    for item in definitions:
+        if not isinstance(item, dict):
+            continue
+        series_id = _canonical_string(item.get("series_id"))
+        if series_id is not None:
+            series_map[series_id] = item
+    return series_map
+
+
+def _resolve_context_value(
+    field: str,
+    payload: dict[str, Any],
+    specimen: dict[str, Any],
+    series_map: dict[str, dict[str, Any]],
+) -> Any:
+    if field in specimen and specimen[field] is not None:
+        return specimen[field]
+
+    context_overrides = specimen.get("context_overrides")
+    if isinstance(context_overrides, dict) and field in context_overrides and context_overrides[field] is not None:
+        return context_overrides[field]
+
+    series_id = _canonical_string(specimen.get("series_id"))
+    if series_id is not None:
+        series_def = series_map.get(series_id)
+        if isinstance(series_def, dict):
+            shared = series_def.get("shared_context")
+            if isinstance(shared, dict) and field in shared and shared[field] is not None:
+                return shared[field]
+
+    shared_context = payload.get("shared_context")
+    if isinstance(shared_context, dict) and field in shared_context and shared_context[field] is not None:
+        return shared_context[field]
+
+    if field in {"loading_mode", "loading_pattern", "boundary_condition", "test_temperature", "loading_regime"}:
+        paper_level = payload.get("paper_level")
+        if isinstance(paper_level, dict) and field in paper_level and paper_level[field] is not None:
+            paper_level_value = paper_level[field]
+            if field == "loading_mode" and paper_level_value == "mixed":
+                return None
+            if field == "loading_pattern" and paper_level_value == "mixed":
+                return None
+            return paper_level_value
+
+    if field == "section_shape":
+        group_name = specimen.get("__group_name__")
+        if isinstance(group_name, str):
+            allowed_shapes = GROUP_TO_SHAPES.get(group_name)
+            if allowed_shapes == {"circular"}:
+                return "circular"
+
+    return None
+
+
+def _resolve_specimen_context(
+    payload: dict[str, Any],
+    specimen: dict[str, Any],
+    series_map: dict[str, dict[str, Any]],
+) -> dict[str, Any]:
+    return {
+        field: _resolve_context_value(field, payload, specimen, series_map)
+        for field in INHERITABLE_CONTEXT_KEYS
+    }
+
+
+def _validate_context_override_conflicts(specimen: dict[str, Any], tag: str, errors: list[str]) -> None:
+    context_overrides = specimen.get("context_overrides")
+    if not isinstance(context_overrides, dict):
+        return
+    for field in ROW_CONTEXT_KEYS:
+        if field in specimen and field in context_overrides and specimen[field] != context_overrides[field]:
+            errors.append(
+                f"`{tag}` defines `{field}` both directly and in `context_overrides` with different values."
+            )
+
+
+def _validate_effective_context(
+    group_name: str,
+    tag: str,
+    effective: dict[str, Any],
+    errors: list[str],
+    warnings: list[str],
+) -> None:
+    section_shape = effective.get("section_shape")
+    if not isinstance(section_shape, str):
+        errors.append(f"`{tag}` cannot resolve `section_shape` from row/shared/series context.")
+    elif section_shape not in SECTION_SHAPES:
+        errors.append(f"`{tag}.section_shape` invalid after context resolution: {section_shape}")
+    elif section_shape not in GROUP_TO_SHAPES[group_name]:
+        errors.append(f"`{tag}.section_shape` incompatible with {group_name} after context resolution.")
+
+    loading_mode = effective.get("loading_mode")
+    if not isinstance(loading_mode, str):
+        errors.append(f"`{tag}` cannot resolve `loading_mode` from row/shared/series context.")
+    elif loading_mode not in ROW_LOADING_MODES:
+        errors.append(f"`{tag}.loading_mode` invalid after context resolution: {loading_mode}")
+
+    loading_pattern = effective.get("loading_pattern")
+    if not isinstance(loading_pattern, str):
+        errors.append(f"`{tag}` cannot resolve `loading_pattern` from row/shared/series context.")
+    elif loading_pattern not in ROW_LOADING_PATTERNS:
+        errors.append(f"`{tag}.loading_pattern` invalid after context resolution: {loading_pattern}")
+
+    boundary_condition = effective.get("boundary_condition")
+    if boundary_condition is not None and not isinstance(boundary_condition, str):
+        errors.append(f"`{tag}.boundary_condition` invalid after context resolution.")
+
+    fc_type = effective.get("fc_type")
+    if not isinstance(fc_type, str):
+        errors.append(f"`{tag}` cannot resolve `fc_type` from row/shared/series context.")
+    else:
+        normalized_fc_type = fc_type.strip()
+        if not normalized_fc_type:
+            errors.append(f"`{tag}.fc_type` must be non-empty after context resolution.")
+        elif FC_TYPE_DISALLOWED_SYMBOL_PATTERN.search(normalized_fc_type):
+            errors.append(
+                f"`{tag}.fc_type` must not use symbolic notation like f'c/fcu/fck. Use cube/cylinder/prism or Unknown."
+            )
+        elif not _is_valid_fc_type(normalized_fc_type):
+            errors.append(
+                f"`{tag}.fc_type` invalid after context resolution. Allowed forms: cube/cylinder/prism/Unknown or sized forms like `Cylinder 100x200`."
+            )
+
+    fc_basis = effective.get("fc_basis")
+    if not isinstance(fc_basis, str):
+        errors.append(f"`{tag}` cannot resolve `fc_basis` from row/shared/series context.")
+    elif fc_basis not in FC_BASIS_ALLOWED:
+        errors.append(f"`{tag}.fc_basis` invalid after context resolution: {fc_basis}")
+
+    if isinstance(fc_type, str) and isinstance(fc_basis, str):
+        implied = _fc_type_implied_basis(fc_type)
+        if implied is not None and fc_basis != "unknown" and implied != fc_basis:
+            errors.append(
+                f"`{tag}.fc_type` '{fc_type}' implies basis '{implied}' but `fc_basis` is '{fc_basis}'."
+            )
+
+    steel_type = effective.get("steel_type")
+    if not isinstance(steel_type, str):
+        errors.append(f"`{tag}` cannot resolve `steel_type` from row/shared/series context.")
+    elif steel_type not in STEEL_TYPES:
+        errors.append(f"`{tag}.steel_type` invalid after context resolution: {steel_type}")
+
+    concrete_type = effective.get("concrete_type")
+    if not isinstance(concrete_type, str):
+        errors.append(f"`{tag}` cannot resolve `concrete_type` from row/shared/series context.")
+    elif concrete_type not in CONCRETE_TYPES:
+        errors.append(f"`{tag}.concrete_type` invalid after context resolution: {concrete_type}")
+
+    material_modifiers = effective.get("material_modifiers")
+    if not isinstance(material_modifiers, list):
+        errors.append(f"`{tag}` cannot resolve `material_modifiers` from row/shared/series context.")
+    else:
+        _validate_string_list(material_modifiers, f"{tag}.material_modifiers", errors)
+        unknown_modifiers = _unknown_material_modifiers(_trimmed_string_list(material_modifiers))
+        if unknown_modifiers:
+            warnings.append(
+                f"`{tag}.material_modifiers` contains unnormalized or unknown subtype tags: {unknown_modifiers}. Keep family-level `concrete_type` correct and normalize the tags when defensible."
+            )
+
+    test_temperature = effective.get("test_temperature")
+    if not isinstance(test_temperature, str):
+        errors.append(f"`{tag}` cannot resolve `test_temperature` from shared/series/paper context.")
+    elif test_temperature not in TEST_TEMPERATURES:
+        errors.append(f"`{tag}.test_temperature` invalid after context resolution: {test_temperature}")
+
+    loading_regime = effective.get("loading_regime")
+    if not isinstance(loading_regime, str):
+        errors.append(f"`{tag}` cannot resolve `loading_regime` from shared/series/paper context.")
+    elif loading_regime not in LOADING_REGIMES:
+        errors.append(f"`{tag}.loading_regime` invalid after context resolution: {loading_regime}")
+
+
+def _expected_nonordinary_reasons(effective: dict[str, Any]) -> set[str]:
+    reasons: set[str] = set()
+    if effective.get("section_shape") not in ORDINARY_ALLOWED_SHAPES and effective.get("section_shape") in SECTION_SHAPES:
+        reasons.add("non_ordinary_shape")
+    if effective.get("steel_type") == "stainless_steel":
+        reasons.add("stainless_steel")
+    if effective.get("concrete_type") == "uhpc":
+        reasons.add("uhpc")
+    if effective.get("loading_pattern") == "cyclic":
+        reasons.add("cyclic_loading")
+    if effective.get("loading_pattern") == "repeated":
+        reasons.add("repeated_loading")
+    if effective.get("test_temperature") not in {None, "ambient", "unknown"}:
+        reasons.add("non_ambient_temperature")
+    if effective.get("loading_regime") not in {None, "static", "unknown"}:
+        reasons.add("non_static_loading_regime")
+    for modifier in _trimmed_string_list(effective.get("material_modifiers")):
+        reasons.update(_material_modifier_nonordinary_reasons(modifier))
+    return reasons
+
+
+def _ordinary_verdict_details(
+    effective: dict[str, Any],
+    *,
+    durability_conditioning: list[str] | None = None,
+    member_modifiers: list[str] | None = None,
+) -> tuple[bool, set[str]]:
+    reasons = set(_expected_nonordinary_reasons(effective))
+    reasons.update(durability_conditioning or [])
+    reasons.update(member_modifiers or [])
+    return len(reasons) == 0, reasons
 
 
 def _validate_specimen(
     group_name: str,
     idx: int,
     specimen: Any,
+    payload: dict[str, Any],
+    series_map: dict[str, dict[str, Any]],
     errors: list[str],
     warnings: list[str],
     strict_rounding: bool,
@@ -667,9 +979,13 @@ def _validate_specimen(
         errors.append(f"`{tag}` must be object.")
         return
 
-    missing = SPECIMEN_KEYS - set(specimen.keys())
+    missing = SPECIMEN_REQUIRED_KEYS - set(specimen.keys())
     if missing:
         errors.append(f"`{tag}` missing keys: {sorted(missing)}")
+
+    unknown_keys = sorted(set(specimen.keys()) - (SPECIMEN_REQUIRED_KEYS | SPECIMEN_OPTIONAL_KEYS | {"__group_name__"}))
+    if unknown_keys:
+        errors.append(f"`{tag}` has unsupported keys: {unknown_keys}")
 
     for key in NUMERIC_FIELDS:
         if key in specimen and not _is_number(specimen[key]):
@@ -684,18 +1000,18 @@ def _validate_specimen(
         elif specimen["ref_no"] != "":
             errors.append(f"`{tag}.ref_no` must be empty string.")
 
+    specimen_label = None
     if "specimen_label" in specimen:
-        if not isinstance(specimen["specimen_label"], str):
-            errors.append(f"`{tag}.specimen_label` must be string.")
-        elif not specimen["specimen_label"].strip():
-            errors.append(f"`{tag}.specimen_label` must be non-empty.")
+        specimen_label = _validate_canonical_string(specimen["specimen_label"], f"{tag}.specimen_label", errors)
 
+    reported_group_label = None
     if "reported_group_label" in specimen:
-        value = specimen["reported_group_label"]
-        if value is not None and not isinstance(value, str):
-            errors.append(f"`{tag}.reported_group_label` must be string or null.")
-        elif isinstance(value, str) and not value.strip():
-            errors.append(f"`{tag}.reported_group_label` must be non-empty when provided.")
+        reported_group_label = _validate_canonical_string(
+            specimen["reported_group_label"],
+            f"{tag}.reported_group_label",
+            errors,
+            allow_null=True,
+        )
 
     if "replicate_index" in specimen:
         value = specimen["replicate_index"]
@@ -704,119 +1020,60 @@ def _validate_specimen(
         elif isinstance(value, int) and value <= 0:
             errors.append(f"`{tag}.replicate_index` must be >= 1 when provided.")
 
-    if (
-        isinstance(specimen.get("specimen_label"), str)
-        and isinstance(specimen.get("reported_group_label"), str)
-        and isinstance(specimen.get("replicate_index"), int)
-    ):
-        expected_label = f"{specimen['reported_group_label'].strip()}-{specimen['replicate_index']}"
-        if specimen["specimen_label"].strip() != expected_label:
+    if specimen_label is not None and reported_group_label is not None and isinstance(specimen.get("replicate_index"), int):
+        expected_label = f"{reported_group_label}-{specimen['replicate_index']}"
+        if specimen_label != expected_label:
             warnings.append(
-                f"`{tag}` has `reported_group_label`/`replicate_index`, but `specimen_label` "
-                f"is not the canonical `{expected_label}` form."
+                f"`{tag}` has `reported_group_label`/`replicate_index`, but `specimen_label` is not the canonical `{expected_label}` form."
             )
 
-    if "section_shape" in specimen:
-        shape = specimen["section_shape"]
-        if not isinstance(shape, str):
-            errors.append(f"`{tag}.section_shape` must be string.")
-        elif shape not in SECTION_SHAPES:
-            errors.append(f"`{tag}.section_shape` invalid: {shape}")
-        elif shape not in GROUP_TO_SHAPES[group_name]:
-            errors.append(f"`{tag}.section_shape` incompatible with {group_name}.")
+    if "series_id" in specimen:
+        series_id = _validate_canonical_string(specimen["series_id"], f"{tag}.series_id", errors, allow_null=True)
+        if series_id is not None and series_id not in series_map:
+            errors.append(f"`{tag}.series_id` refers to unknown series_id `{series_id}`.")
 
-    if "loading_mode" in specimen:
-        mode = specimen["loading_mode"]
-        if not isinstance(mode, str):
-            errors.append(f"`{tag}.loading_mode` must be string.")
-        elif mode not in ROW_LOADING_MODES:
-            errors.append(f"`{tag}.loading_mode` invalid: {mode}")
+    if "specimen_note" in specimen and specimen["specimen_note"] is not None and not isinstance(specimen["specimen_note"], str):
+        errors.append(f"`{tag}.specimen_note` must be string or null.")
 
-    if "loading_pattern" in specimen:
-        lp = specimen["loading_pattern"]
-        if not isinstance(lp, str):
-            errors.append(f"`{tag}.loading_pattern` must be string.")
-        elif lp not in ROW_LOADING_PATTERNS:
-            errors.append(f"`{tag}.loading_pattern` invalid: {lp}")
+    if "quality_flags" in specimen:
+        _validate_string_list(specimen["quality_flags"], f"{tag}.quality_flags", errors)
 
-    if "boundary_condition" in specimen and specimen["boundary_condition"] is not None and not isinstance(specimen["boundary_condition"], str):
-        errors.append(f"`{tag}.boundary_condition` must be string or null.")
+    if "context_overrides" in specimen:
+        _validate_context_fragment(specimen["context_overrides"], f"{tag}.context_overrides", errors)
+
+    for field in ROW_CONTEXT_KEYS:
+        if field in specimen:
+            _validate_context_fragment({field: specimen[field]}, tag, errors)
+
+    _validate_context_override_conflicts(specimen, tag, errors)
 
     if "is_ordinary" in specimen and not isinstance(specimen["is_ordinary"], bool):
         errors.append(f"`{tag}.is_ordinary` must be boolean.")
+
     if "ordinary_exclusion_reasons" in specimen:
         _validate_string_list(specimen["ordinary_exclusion_reasons"], f"{tag}.ordinary_exclusion_reasons", errors)
-        is_ord = specimen.get("is_ordinary")
         reasons = specimen["ordinary_exclusion_reasons"]
+        is_ord = specimen.get("is_ordinary")
         if is_ord is True and isinstance(reasons, list) and len(reasons) > 0:
             errors.append(f"`{tag}.is_ordinary=true` must have empty `ordinary_exclusion_reasons`.")
         if is_ord is False and isinstance(reasons, list) and len(reasons) == 0:
             errors.append(f"`{tag}.is_ordinary=false` must have non-empty `ordinary_exclusion_reasons`.")
-        if is_ord is False:
-            errors.append(
-                f"`{tag}.is_ordinary=false` rows must not remain in {group_name}; "
-                "move them into `excluded_specimens`."
-            )
-
-    if "fc_type" in specimen:
-        if not isinstance(specimen["fc_type"], str):
-            errors.append(f"`{tag}.fc_type` must be string.")
-        else:
-            fc_type = specimen["fc_type"].strip()
-            if not fc_type:
-                errors.append(f"`{tag}.fc_type` must be non-empty.")
-            elif FC_TYPE_DISALLOWED_SYMBOL_PATTERN.search(fc_type):
-                errors.append(
-                    f"`{tag}.fc_type` must not use symbolic notation like f'c/fcu/fck. "
-                    "Use cube/cylinder/prism (with optional size) or Unknown."
-                )
-            elif not _is_valid_fc_type(fc_type):
-                errors.append(
-                    f"`{tag}.fc_type` invalid. Allowed forms: cube/cylinder/prism/Unknown "
-                    "or sized forms like `Cylinder 100x200`."
-                )
-
-    if "fc_basis" in specimen:
-        if not isinstance(specimen["fc_basis"], str):
-            errors.append(f"`{tag}.fc_basis` must be string.")
-        elif specimen["fc_basis"] not in FC_BASIS_ALLOWED:
-            errors.append(f"`{tag}.fc_basis` invalid: {specimen['fc_basis']}")
-
-    if "fc_type" in specimen and "fc_basis" in specimen:
-        fc_type_str = specimen["fc_type"] if isinstance(specimen["fc_type"], str) else ""
-        fc_basis_str = specimen["fc_basis"] if isinstance(specimen["fc_basis"], str) else ""
-        implied = _fc_type_implied_basis(fc_type_str)
-        if implied is not None and fc_basis_str != "unknown" and implied != fc_basis_str:
-            errors.append(
-                f"`{tag}.fc_type` '{specimen['fc_type']}' implies basis '{implied}' "
-                f"but `fc_basis` is '{fc_basis_str}'. These must be consistent."
-            )
-
-    for key, allowed in (("steel_type", STEEL_TYPES), ("concrete_type", CONCRETE_TYPES)):
-        if key in specimen:
-            if not isinstance(specimen[key], str):
-                errors.append(f"`{tag}.{key}` must be string.")
-            elif specimen[key] not in allowed:
-                errors.append(f"`{tag}.{key}` invalid: {specimen[key]}")
 
     if "source_evidence" in specimen:
         _validate_nonempty_line(specimen["source_evidence"], f"{tag}.source_evidence", errors)
         if isinstance(specimen["source_evidence"], str):
             _warn_if_locator_missing(specimen["source_evidence"], f"{tag}.source_evidence", warnings)
 
-    if "quality_flags" in specimen:
-        _validate_string_list(specimen["quality_flags"], f"{tag}.quality_flags", errors)
+    specimen["__group_name__"] = group_name
+    effective = _resolve_specimen_context(payload, specimen, series_map)
+    _validate_effective_context(group_name, tag, effective, errors, warnings)
 
-    if "material_modifiers" in specimen:
-        _validate_string_list(specimen["material_modifiers"], f"{tag}.material_modifiers", errors)
-
-    flags = specimen.get("quality_flags") if isinstance(specimen.get("quality_flags"), list) else []
-    if "group_average_n_exp" in flags:
+    raw_flags = specimen.get("quality_flags")
+    flags = raw_flags if isinstance(raw_flags, list) else []
+    if any(flag == "group_average_n_exp" for flag in flags):
         source_evidence = specimen.get("source_evidence")
         if isinstance(source_evidence, str) and GROUP_AVERAGE_HINT_PATTERN.search(source_evidence) is None:
-            warnings.append(
-                f"`{tag}.source_evidence` should state that `n_exp` is a reported group average."
-            )
+            warnings.append(f"`{tag}.source_evidence` should state that `n_exp` is a reported group average.")
 
     for key in ("fc_value", "fy", "b", "h", "t", "L", "n_exp"):
         if key in specimen and _is_number(specimen[key]) and specimen[key] <= 0:
@@ -833,26 +1090,23 @@ def _validate_specimen(
         errors.append(f"`{tag}.r0` must be >= 0.")
 
     if group_name == "Group_B":
-        if all(k in specimen and _is_number(specimen[k]) for k in ("b", "h")):
-            if not _roughly_equal(specimen["b"], specimen["h"]):
-                errors.append(f"`{tag}` must satisfy b == h for Group_B.")
-        if all(k in specimen and _is_number(specimen[k]) for k in ("h", "r0")):
-            if not _roughly_equal(specimen["r0"], specimen["h"] / 2.0):
-                errors.append(f"`{tag}.r0` must equal h/2 for Group_B.")
+        if all(k in specimen and _is_number(specimen[k]) for k in ("b", "h")) and not _roughly_equal(specimen["b"], specimen["h"]):
+            errors.append(f"`{tag}` must satisfy b == h for Group_B.")
+        if all(k in specimen and _is_number(specimen[k]) for k in ("h", "r0")) and not _roughly_equal(specimen["r0"], specimen["h"] / 2.0):
+            errors.append(f"`{tag}.r0` must equal h/2 for Group_B.")
 
     if group_name == "Group_C":
-        if all(k in specimen and _is_number(specimen[k]) for k in ("b", "h")):
-            if specimen["b"] + EPS < specimen["h"]:
-                errors.append(f"`{tag}` must satisfy b >= h for Group_C.")
-        if all(k in specimen and _is_number(specimen[k]) for k in ("h", "r0")):
-            if not _roughly_equal(specimen["r0"], specimen["h"] / 2.0):
-                errors.append(f"`{tag}.r0` must equal h/2 for Group_C.")
+        if all(k in specimen and _is_number(specimen[k]) for k in ("b", "h")) and specimen["b"] + EPS < specimen["h"]:
+            errors.append(f"`{tag}` must satisfy b >= h for Group_C.")
+        if all(k in specimen and _is_number(specimen[k]) for k in ("h", "r0")) and not _roughly_equal(specimen["r0"], specimen["h"] / 2.0):
+            errors.append(f"`{tag}.r0` must equal h/2 for Group_C.")
 
-    if "loading_mode" in specimen and all(k in specimen and _is_number(specimen[k]) for k in ("e1", "e2")):
-        if specimen["loading_mode"] == "axial":
+    loading_mode = effective.get("loading_mode")
+    if isinstance(loading_mode, str) and all(k in specimen and _is_number(specimen[k]) for k in ("e1", "e2")):
+        if loading_mode == "axial":
             if not (_roughly_equal(specimen["e1"], 0.0) and _roughly_equal(specimen["e2"], 0.0)):
                 errors.append(f"`{tag}` axial row must have e1=e2=0.")
-        elif specimen["loading_mode"] == "eccentric":
+        elif loading_mode == "eccentric":
             if _roughly_equal(specimen["e1"], 0.0) and _roughly_equal(specimen["e2"], 0.0):
                 errors.append(f"`{tag}` eccentric row cannot have both e1 and e2 equal to 0.")
 
@@ -874,42 +1128,13 @@ def _iter_specimens(payload: dict[str, Any]):
                     yield group_name, idx, specimen
 
 
-def _count_excluded_members(payload: dict[str, Any]) -> int:
-    total = 0
-    bundles = payload.get("excluded_specimens", [])
-    if isinstance(bundles, list):
-        for bundle in bundles:
-            if isinstance(bundle, dict):
-                labels = bundle.get("specimen_labels")
-                if isinstance(labels, list):
-                    total += len(labels)
-    return total
-
-
-def _payload_label_maps(
-    payload: dict[str, Any],
-) -> tuple[dict[str, dict[str, Any]], dict[str, dict[str, Any]]]:
-    ordinary_rows: dict[str, dict[str, Any]] = {}
-    excluded_rows: dict[str, dict[str, Any]] = {}
-
-    for _group_name, _idx, specimen in _iter_specimens(payload):
-        label = specimen.get("specimen_label")
-        if isinstance(label, str) and label.strip():
-            ordinary_rows[label.strip()] = specimen
-
-    bundles = payload.get("excluded_specimens", [])
-    if isinstance(bundles, list):
-        for bundle in bundles:
-            if not isinstance(bundle, dict):
-                continue
-            labels = bundle.get("specimen_labels")
-            if not isinstance(labels, list):
-                continue
-            for label in labels:
-                if isinstance(label, str) and label.strip():
-                    excluded_rows[label.strip()] = bundle
-
-    return ordinary_rows, excluded_rows
+def _payload_label_map(payload: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    rows: dict[str, dict[str, Any]] = {}
+    for _, _, specimen in _iter_specimens(payload):
+        label = _canonical_string(specimen.get("specimen_label"))
+        if label is not None:
+            rows[label] = specimen
+    return rows
 
 
 def validate_payload_against_scratch(payload: Any, scratch_payload: Any) -> list[str]:
@@ -924,8 +1149,9 @@ def validate_payload_against_scratch(payload: Any, scratch_payload: Any) -> list
     if not isinstance(decisions, list):
         return ["`ordinary_decisions` is required in scratch YAML and must be a list."]
 
-    ordinary_rows, excluded_rows = _payload_label_maps(payload)
-    payload_labels = set(ordinary_rows) | set(excluded_rows)
+    series_map = _build_series_map(payload)
+    payload_rows = _payload_label_map(payload)
+    payload_labels = set(payload_rows)
     scratch_labels: set[str] = set()
     scratch_ordinary_count = 0
     derived_special_factors: set[str] = set()
@@ -940,21 +1166,26 @@ def validate_payload_against_scratch(payload: Any, scratch_payload: Any) -> list
         if missing:
             errors.append(f"`{tag}` missing keys: {sorted(missing)}")
 
-        label = decision.get("label")
-        if not isinstance(label, str) or not label.strip():
-            errors.append(f"`{tag}.label` must be a non-empty string.")
+        label = _validate_canonical_string(decision.get("label"), f"{tag}.label", errors)
+        if label is None:
             continue
-        label = label.strip()
         if label in scratch_labels:
             errors.append(f"`ordinary_decisions` duplicated label: {label}")
             continue
         scratch_labels.add(label)
 
-        concrete_type = decision.get("concrete_type")
-        if not isinstance(concrete_type, str):
-            errors.append(f"`{tag}.concrete_type` must be string.")
+        section_shape = decision.get("section_shape")
+        if not isinstance(section_shape, str) or section_shape not in SECTION_SHAPES:
+            errors.append(f"`{tag}.section_shape` invalid: {section_shape}")
             continue
-        if concrete_type not in CONCRETE_TYPES:
+
+        steel_type = decision.get("steel_type")
+        if not isinstance(steel_type, str) or steel_type not in STEEL_TYPES:
+            errors.append(f"`{tag}.steel_type` invalid: {steel_type}")
+            continue
+
+        concrete_type = decision.get("concrete_type")
+        if not isinstance(concrete_type, str) or concrete_type not in CONCRETE_TYPES:
             errors.append(f"`{tag}.concrete_type` invalid: {concrete_type}")
             continue
         if concrete_type == "high_strength":
@@ -972,59 +1203,49 @@ def validate_payload_against_scratch(payload: Any, scratch_payload: Any) -> list
         if concrete_type == "expansive":
             derived_special_factors.add("expansive_concrete")
 
-        test_temperature = decision.get("test_temperature")
-        if not isinstance(test_temperature, str):
-            errors.append(f"`{tag}.test_temperature` must be string.")
+        loading_pattern = decision.get("loading_pattern")
+        if not isinstance(loading_pattern, str) or loading_pattern not in ROW_LOADING_PATTERNS:
+            errors.append(f"`{tag}.loading_pattern` invalid: {loading_pattern}")
             continue
-        if test_temperature not in TEST_TEMPERATURES:
+
+        test_temperature = decision.get("test_temperature")
+        if not isinstance(test_temperature, str) or test_temperature not in TEST_TEMPERATURES:
             errors.append(f"`{tag}.test_temperature` invalid: {test_temperature}")
             continue
 
         loading_regime = decision.get("loading_regime")
-        if not isinstance(loading_regime, str):
-            errors.append(f"`{tag}.loading_regime` must be string.")
-            continue
-        if loading_regime not in LOADING_REGIMES:
+        if not isinstance(loading_regime, str) or loading_regime not in LOADING_REGIMES:
             errors.append(f"`{tag}.loading_regime` invalid: {loading_regime}")
             continue
 
-        if "durability_conditioning" in decision:
-            _validate_nonempty_string_list(
-                decision["durability_conditioning"],
-                f"{tag}.durability_conditioning",
-                errors,
-                require_unique=True,
-            )
+        _validate_nonempty_string_list(
+            decision.get("durability_conditioning"),
+            f"{tag}.durability_conditioning",
+            errors,
+            require_unique=True,
+        )
         scratch_durability = _trimmed_string_list(decision.get("durability_conditioning"))
         invalid_durability = [item for item in scratch_durability if item not in SCRATCH_DURABILITY_CONDITIONING]
         if invalid_durability:
-            errors.append(
-                f"`{tag}.durability_conditioning` invalid values: {invalid_durability}."
-            )
+            errors.append(f"`{tag}.durability_conditioning` invalid values: {invalid_durability}.")
 
-        if "member_modifiers" in decision:
-            _validate_nonempty_string_list(
-                decision["member_modifiers"],
-                f"{tag}.member_modifiers",
-                errors,
-                require_unique=True,
-            )
+        _validate_nonempty_string_list(
+            decision.get("member_modifiers"),
+            f"{tag}.member_modifiers",
+            errors,
+            require_unique=True,
+        )
         scratch_member_modifiers = _trimmed_string_list(decision.get("member_modifiers"))
-        invalid_member_modifiers = [
-            item for item in scratch_member_modifiers if item not in SCRATCH_MEMBER_MODIFIERS
-        ]
+        invalid_member_modifiers = [item for item in scratch_member_modifiers if item not in SCRATCH_MEMBER_MODIFIERS]
         if invalid_member_modifiers:
-            errors.append(
-                f"`{tag}.member_modifiers` invalid values: {invalid_member_modifiers}."
-            )
+            errors.append(f"`{tag}.member_modifiers` invalid values: {invalid_member_modifiers}.")
 
-        if "material_modifiers" in decision:
-            _validate_nonempty_string_list(
-                decision["material_modifiers"],
-                f"{tag}.material_modifiers",
-                errors,
-                require_unique=True,
-            )
+        _validate_nonempty_string_list(
+            decision.get("material_modifiers"),
+            f"{tag}.material_modifiers",
+            errors,
+            require_unique=True,
+        )
         scratch_modifiers = _trimmed_string_list(decision.get("material_modifiers"))
         for modifier in scratch_modifiers:
             derived_special_factors.update(_material_modifier_family_factors(modifier))
@@ -1034,108 +1255,94 @@ def validate_payload_against_scratch(payload: Any, scratch_payload: Any) -> list
             errors.append(f"`{tag}.is_ordinary` must be boolean.")
             continue
 
-        if "exclusion_reasons" in decision:
-            _validate_nonempty_string_list(
-                decision["exclusion_reasons"],
-                f"{tag}.exclusion_reasons",
-                errors,
-                require_unique=True,
-            )
+        _validate_nonempty_string_list(
+            decision.get("exclusion_reasons"),
+            f"{tag}.exclusion_reasons",
+            errors,
+            require_unique=True,
+        )
         scratch_reasons = _trimmed_string_list(decision.get("exclusion_reasons"))
+
+        specimen = payload_rows.get(label)
+        if specimen is None:
+            errors.append(f"`{tag}` label `{label}` is not present in `Group_A`/`Group_B`/`Group_C`.")
+            continue
+
+        effective = _resolve_specimen_context(payload, specimen, series_map)
+        if effective.get("section_shape") != section_shape:
+            errors.append(
+                f"`{tag}.section_shape` is {section_shape} but JSON row `{label}` resolves to {effective.get('section_shape')}."
+            )
+        if effective.get("steel_type") != steel_type:
+            errors.append(
+                f"`{tag}.steel_type` is {steel_type} but JSON row `{label}` resolves to {effective.get('steel_type')}."
+            )
+        if effective.get("concrete_type") != concrete_type:
+            errors.append(
+                f"`{tag}.concrete_type` is {concrete_type} but JSON row `{label}` resolves to {effective.get('concrete_type')}."
+            )
+        if effective.get("loading_pattern") != loading_pattern:
+            errors.append(
+                f"`{tag}.loading_pattern` is {loading_pattern} but JSON row `{label}` resolves to {effective.get('loading_pattern')}."
+            )
+        if effective.get("test_temperature") != test_temperature:
+            errors.append(
+                f"`{tag}.test_temperature` is {test_temperature} but JSON row `{label}` resolves to {effective.get('test_temperature')}."
+            )
+        if effective.get("loading_regime") != loading_regime:
+            errors.append(
+                f"`{tag}.loading_regime` is {loading_regime} but JSON row `{label}` resolves to {effective.get('loading_regime')}."
+            )
+        if _trimmed_string_list(effective.get("material_modifiers")) != scratch_modifiers:
+            errors.append(f"`{tag}.material_modifiers` does not match JSON row `{label}` after context resolution.")
+
+        effective_gate = {
+            "section_shape": section_shape,
+            "steel_type": steel_type,
+            "concrete_type": concrete_type,
+            "loading_pattern": loading_pattern,
+            "test_temperature": test_temperature,
+            "loading_regime": loading_regime,
+            "material_modifiers": scratch_modifiers,
+        }
+        expected_is_ordinary, expected_reason_set = _ordinary_verdict_details(
+            effective_gate,
+            durability_conditioning=scratch_durability,
+            member_modifiers=scratch_member_modifiers,
+        )
 
         if is_ordinary:
             scratch_ordinary_count += 1
             if scratch_reasons:
                 errors.append(f"`{tag}.exclusion_reasons` must be empty when `is_ordinary=true`.")
-            if test_temperature != "ambient":
+            if not expected_is_ordinary:
                 errors.append(
-                    f"`{tag}.is_ordinary=true` requires `test_temperature=ambient`, got {test_temperature}."
-                )
-            if loading_regime != "static":
-                errors.append(
-                    f"`{tag}.is_ordinary=true` requires `loading_regime=static`, got {loading_regime}."
-                )
-            if scratch_durability:
-                errors.append(
-                    f"`{tag}.is_ordinary=true` requires empty `durability_conditioning`, got {scratch_durability}."
-                )
-            if scratch_member_modifiers:
-                errors.append(
-                    f"`{tag}.is_ordinary=true` requires empty `member_modifiers`, got {scratch_member_modifiers}."
-                )
-            bad_modifiers = sorted(
-                {
-                    reason
-                    for item in scratch_modifiers
-                    for reason in _material_modifier_nonordinary_reasons(item)
-                }
-            )
-            if bad_modifiers:
-                errors.append(
-                    f"`{tag}.is_ordinary=true` but material_modifiers contains non-ordinary factors: {bad_modifiers}."
-                )
-            specimen = ordinary_rows.get(label)
-            if specimen is None:
-                errors.append(
-                    f"`{tag}` is ordinary in scratch YAML but `{label}` is not present in `Group_A`/`Group_B`/`Group_C`."
-                )
-                continue
-            if specimen.get("concrete_type") != concrete_type:
-                errors.append(
-                    f"`{tag}.concrete_type` is {concrete_type} but JSON row `{label}` stores {specimen.get('concrete_type')}."
-                )
-            if _trimmed_string_list(specimen.get("material_modifiers")) != scratch_modifiers:
-                errors.append(
-                    f"`{tag}.material_modifiers` does not match JSON row `{label}`."
+                    f"`{tag}.is_ordinary=true` is inconsistent with the gate inputs; implied non-ordinary reasons: {sorted(expected_reason_set)}."
                 )
             if specimen.get("is_ordinary") is not True:
                 errors.append(f"JSON row `{label}` must have `is_ordinary=true` to match `{tag}`.")
             if _trimmed_string_list(specimen.get("ordinary_exclusion_reasons")):
-                errors.append(
-                    f"JSON row `{label}` must have empty `ordinary_exclusion_reasons` to match `{tag}`."
-                )
+                errors.append(f"JSON row `{label}` must have empty `ordinary_exclusion_reasons` to match `{tag}`.")
         else:
             if not scratch_reasons:
                 errors.append(f"`{tag}.exclusion_reasons` must be non-empty when `is_ordinary=false`.")
-            expected_reason_set = set(scratch_durability) | set(scratch_member_modifiers)
-            if concrete_type == "uhpc":
-                expected_reason_set.add("uhpc")
-            for item in scratch_modifiers:
-                expected_reason_set.update(_material_modifier_nonordinary_reasons(item))
-            if test_temperature not in {"ambient", "unknown"}:
-                expected_reason_set.add("non_ambient_temperature")
-            if loading_regime not in {"static", "unknown"}:
-                expected_reason_set.add("non_static_loading_regime")
             missing_expected_reasons = sorted(expected_reason_set - set(scratch_reasons))
             if missing_expected_reasons:
                 errors.append(
                     f"`{tag}.exclusion_reasons` must include reasons implied by the gate inputs: {missing_expected_reasons}."
                 )
-            bundle = excluded_rows.get(label)
-            if bundle is None:
-                errors.append(
-                    f"`{tag}` is excluded in scratch YAML but `{label}` is not represented in `excluded_specimens`."
-                )
-                continue
-            bundle_reasons = _trimmed_string_list(bundle.get("ordinary_exclusion_reasons"))
-            if set(bundle_reasons) != set(scratch_reasons):
-                errors.append(
-                    f"`{tag}.exclusion_reasons` does not match the bundle reasons for `{label}`."
-                )
+            if specimen.get("is_ordinary") is not False:
+                errors.append(f"JSON row `{label}` must have `is_ordinary=false` to match `{tag}`.")
+            if set(_trimmed_string_list(specimen.get("ordinary_exclusion_reasons"))) != set(scratch_reasons):
+                errors.append(f"`{tag}.exclusion_reasons` does not match JSON row `{label}` reasons.")
 
     missing_in_json = sorted(scratch_labels - payload_labels)
     if missing_in_json:
-        errors.append(
-            "Scratch YAML labels are not fully represented in JSON: "
-            + ", ".join(missing_in_json)
-        )
+        errors.append("Scratch YAML labels are not fully represented in JSON: " + ", ".join(missing_in_json))
 
     missing_in_scratch = sorted(payload_labels - scratch_labels)
     if missing_in_scratch:
-        errors.append(
-            "JSON labels are missing from `ordinary_decisions`: "
-            + ", ".join(missing_in_scratch)
-        )
+        errors.append("JSON labels are missing from `ordinary_decisions`: " + ", ".join(missing_in_scratch))
 
     ordinary_filter = payload.get("ordinary_filter")
     if isinstance(ordinary_filter, dict):
@@ -1152,8 +1359,8 @@ def validate_payload_against_scratch(payload: Any, scratch_payload: Any) -> list
         scratch_special_factors = sorted(derived_special_factors)
         if _trimmed_string_list(ordinary_filter.get("special_factors")) != scratch_special_factors:
             errors.append(
-                "`ordinary_filter.special_factors` must equal the sorted paper-level tags derived "
-                f"from scratch YAML ordinary decisions: {scratch_special_factors}."
+                "`ordinary_filter.special_factors` must equal the sorted paper-level tags derived from scratch YAML ordinary decisions: "
+                f"{scratch_special_factors}."
             )
 
     paper_level = payload.get("paper_level")
@@ -1168,71 +1375,65 @@ def validate_payload_against_scratch(payload: Any, scratch_payload: Any) -> list
 
 
 def _validate_specimen_ordinary(
-    tag: str, specimen: dict[str, Any], errors: list[str], warnings: list[str]
+    tag: str,
+    specimen: dict[str, Any],
+    effective: dict[str, Any],
+    errors: list[str],
+    warnings: list[str],
 ) -> None:
-    """Validate per-specimen ordinary flag consistency."""
     is_ord = specimen.get("is_ordinary")
     if not isinstance(is_ord, bool):
         return
 
+    expected_is_ordinary, expected_reasons = _ordinary_verdict_details(effective)
+
     if is_ord is True:
-        shape = specimen.get("section_shape")
-        if shape not in ORDINARY_ALLOWED_SHAPES:
-            errors.append(f"`{tag}.is_ordinary=true` but section_shape '{shape}' not allowed.")
-        if specimen.get("steel_type") != "carbon_steel":
-            errors.append(f"`{tag}.is_ordinary=true` but steel_type is not carbon_steel.")
-        concrete_type = specimen.get("concrete_type")
-        if concrete_type not in ORDINARY_ALLOWED_CONCRETE_TYPES:
-            errors.append(f"`{tag}.is_ordinary=true` but concrete_type '{concrete_type}' not allowed.")
-        if specimen.get("loading_pattern") != "monotonic":
-            errors.append(f"`{tag}.is_ordinary=true` but loading_pattern is not monotonic.")
+        if not expected_is_ordinary:
+            errors.append(
+                f"`{tag}.is_ordinary=true` is inconsistent with resolved context; implied non-ordinary reasons: {sorted(expected_reasons)}."
+            )
+        concrete_type = effective.get("concrete_type")
         r_ratio = specimen.get("r_ratio")
         if concrete_type == "recycled":
             if not _is_number(r_ratio) or (isinstance(r_ratio, (int, float)) and r_ratio <= 0):
                 errors.append(f"`{tag}.is_ordinary=true` recycled concrete must have r_ratio > 0.")
-        modifiers = specimen.get("material_modifiers", [])
-        if isinstance(modifiers, list):
-            bad = sorted(
-                {
-                    reason
-                    for modifier in modifiers
-                    for reason in _material_modifier_nonordinary_reasons(modifier)
-                }
+        modifiers = _trimmed_string_list(effective.get("material_modifiers"))
+        unknown_modifiers = _unknown_material_modifiers(modifiers)
+        if unknown_modifiers:
+            warnings.append(
+                f"`{tag}.material_modifiers` contains unnormalized or unknown subtype tags: {unknown_modifiers}. Keep family-level `concrete_type` correct and normalize the tags when defensible."
             )
-            if bad:
-                errors.append(
-                    f"`{tag}.is_ordinary=true` but material_modifiers contains non-ordinary factors: {bad}."
-                )
-            unknown_modifiers = _unknown_material_modifiers(_trimmed_string_list(modifiers))
-            if unknown_modifiers:
-                warnings.append(
-                    f"`{tag}.material_modifiers` contains unnormalized or unknown subtype tags: {unknown_modifiers}. "
-                    "Keep family-level `concrete_type` correct and normalize the tags when defensible."
-                )
+    else:
+        reasons = _trimmed_string_list(specimen.get("ordinary_exclusion_reasons"))
+        if not reasons:
+            errors.append(f"`{tag}.is_ordinary=false` must have non-empty `ordinary_exclusion_reasons`.")
+        missing = sorted(expected_reasons - set(reasons))
+        if missing:
+            warnings.append(
+                f"`{tag}.ordinary_exclusion_reasons` is missing some reasons implied by resolved context: {missing}."
+            )
 
     r_ratio = specimen.get("r_ratio")
-    concrete_type = specimen.get("concrete_type")
+    concrete_type = effective.get("concrete_type")
     if concrete_type != "recycled" and _is_number(r_ratio) and isinstance(r_ratio, (int, float)) and r_ratio > 0:
         warnings.append(
-            f"`{tag}.r_ratio` > 0 but `concrete_type` is {concrete_type}; "
-            "use `recycled` when recycled aggregate is the primary type."
+            f"`{tag}.r_ratio` > 0 but resolved `concrete_type` is {concrete_type}; use `recycled` when recycled aggregate is the primary type."
         )
 
 
 def _validate_ordinary_scope(payload: dict[str, Any], errors: list[str], warnings: list[str]) -> None:
-    """Specimen-level ordinary validation."""
-    # Per-specimen ordinary checks
     actual_ordinary_count = 0
-    ordinary_group_count = 0
+    total_count = 0
+    series_map = _build_series_map(payload)
     for group_name, idx, specimen in _iter_specimens(payload):
         tag = f"{group_name}[{idx}]"
-        ordinary_group_count += 1
-        _validate_specimen_ordinary(tag, specimen, errors, warnings)
+        specimen["__group_name__"] = group_name
+        effective = _resolve_specimen_context(payload, specimen, series_map)
+        total_count += 1
+        _validate_specimen_ordinary(tag, specimen, effective, errors, warnings)
         if specimen.get("is_ordinary") is True:
             actual_ordinary_count += 1
-    total_count = ordinary_group_count + _count_excluded_members(payload)
 
-    # Cross-check is_ordinary_cfst against specimen flags
     has_ordinary = actual_ordinary_count > 0
     is_ordinary_cfst = payload.get("is_ordinary_cfst")
     if isinstance(is_ordinary_cfst, bool):
@@ -1241,20 +1442,17 @@ def _validate_ordinary_scope(payload: dict[str, Any], errors: list[str], warning
         if not is_ordinary_cfst and has_ordinary:
             errors.append("`is_ordinary_cfst=false` but some specimens have `is_ordinary=true`.")
 
-    # Cross-check ordinary_filter counts
     ordinary_filter = payload.get("ordinary_filter")
     if isinstance(ordinary_filter, dict):
         of_count = ordinary_filter.get("ordinary_count")
         if isinstance(of_count, int) and of_count != actual_ordinary_count:
             errors.append(
-                f"`ordinary_filter.ordinary_count` is {of_count} but actual count "
-                f"of `is_ordinary=true` specimens is {actual_ordinary_count}."
+                f"`ordinary_filter.ordinary_count` is {of_count} but actual count of `is_ordinary=true` specimens is {actual_ordinary_count}."
             )
         of_total = ordinary_filter.get("total_count")
         if isinstance(of_total, int) and of_total != total_count:
             errors.append(
-                f"`ordinary_filter.total_count` is {of_total} but actual specimen "
-                f"count is {total_count}."
+                f"`ordinary_filter.total_count` is {of_total} but actual specimen count is {total_count}."
             )
 
 
@@ -1278,14 +1476,9 @@ def validate_payload(
         if not isinstance(payload["schema_version"], str):
             errors.append("`schema_version` must be string.")
         elif payload["schema_version"] != SCHEMA_VERSION:
-            errors.append(
-                f"`schema_version` must be `{SCHEMA_VERSION}`, got `{payload['schema_version']}`."
-            )
+            errors.append(f"`schema_version` must be `{SCHEMA_VERSION}`, got `{payload['schema_version']}`.")
     if "paper_id" in payload:
-        if not isinstance(payload["paper_id"], str):
-            errors.append("`paper_id` must be string.")
-        elif not payload["paper_id"].strip():
-            errors.append("`paper_id` must be non-empty.")
+        _validate_canonical_string(payload["paper_id"], "paper_id", errors)
 
     if "is_valid" in payload and not isinstance(payload["is_valid"], bool):
         errors.append("`is_valid` must be boolean.")
@@ -1297,24 +1490,22 @@ def validate_payload(
     for group_name in ("Group_A", "Group_B", "Group_C"):
         if group_name in payload and not isinstance(payload[group_name], list):
             errors.append(f"`{group_name}` must be list.")
-    if "excluded_specimens" in payload and not isinstance(payload["excluded_specimens"], list):
-        errors.append("`excluded_specimens` must be list.")
 
     if "ordinary_filter" in payload:
-        _validate_ordinary_filter(
-            payload["ordinary_filter"],
-            payload.get("is_valid"),
-            payload.get("is_ordinary_cfst"),
-            errors,
-        )
+        _validate_ordinary_filter(payload["ordinary_filter"], payload.get("is_valid"), payload.get("is_ordinary_cfst"), errors)
     if "ref_info" in payload:
         _validate_ref_info(payload["ref_info"], errors)
     if "paper_level" in payload:
         _validate_paper_level(payload["paper_level"], errors)
+    if "shared_context" in payload:
+        _validate_context_fragment(payload["shared_context"], "shared_context", errors)
+    if "series_definitions" in payload:
+        _validate_series_definitions(payload["series_definitions"], errors)
 
     if expect_valid is not None and "is_valid" in payload and payload["is_valid"] != expect_valid:
         errors.append(f"`is_valid` expected {expect_valid}, got {payload['is_valid']}.")
 
+    series_map = _build_series_map(payload)
     total = 0
     label_index: dict[str, list[str]] = defaultdict(list)
     for group_name in ("Group_A", "Group_B", "Group_C"):
@@ -1322,38 +1513,22 @@ def validate_payload(
         if isinstance(group, list):
             total += len(group)
             for idx, specimen in enumerate(group):
-                _validate_specimen(group_name, idx, specimen, errors, warnings, strict_rounding)
+                _validate_specimen(group_name, idx, specimen, payload, series_map, errors, warnings, strict_rounding)
                 tag = f"{group_name}[{idx}]"
-                if isinstance(specimen, dict) and isinstance(specimen.get("specimen_label"), str):
-                    label = specimen["specimen_label"].strip()
-                    if label:
+                if isinstance(specimen, dict):
+                    label = _canonical_string(specimen.get("specimen_label"))
+                    if label is not None:
                         label_index[label].append(tag)
-
-    bundles = payload.get("excluded_specimens", [])
-    if isinstance(bundles, list):
-        for idx, bundle in enumerate(bundles):
-            _validate_excluded_bundle(idx, bundle, errors, warnings)
-            if isinstance(bundle, dict):
-                labels = bundle.get("specimen_labels")
-                if isinstance(labels, list):
-                    total += len(labels)
-                    for label_idx, label in enumerate(labels):
-                        if isinstance(label, str) and label.strip():
-                            tag = f"excluded_specimens[{idx}].specimen_labels[{label_idx}]"
-                            label_index[label.strip()].append(tag)
 
     for label, tags in label_index.items():
         if len(tags) > 1:
             errors.append(f"`specimen_label` duplicated across rows: '{label}' in {tags}.")
 
-    expected_from_payload = None
     paper_level = payload.get("paper_level")
     if isinstance(paper_level, dict):
         expected_from_payload = paper_level.get("expected_specimen_count")
         if isinstance(expected_from_payload, int) and expected_from_payload != total:
-            errors.append(
-                f"`paper_level.expected_specimen_count` expected {expected_from_payload}, got {total}."
-            )
+            errors.append(f"`paper_level.expected_specimen_count` expected {expected_from_payload}, got {total}.")
 
     if expect_count is not None and total != expect_count:
         errors.append(f"`specimen` total expected {expect_count}, got {total}.")
@@ -1361,8 +1536,7 @@ def validate_payload(
     if payload.get("is_valid") is True and total == 0:
         errors.append("`is_valid=true` but kept CFST specimen count is 0.")
     if payload.get("is_valid") is False and total > 0:
-        errors.append("`is_valid=false` requires `Group_A`/`Group_B`/`Group_C` and `excluded_specimens` to be empty.")
-
+        errors.append("`is_valid=false` requires `Group_A`/`Group_B`/`Group_C` to be empty.")
     if payload.get("is_valid") is False and payload.get("is_ordinary_cfst") is True:
         errors.append("Invalid paper cannot be marked as ordinary CFST.")
 
@@ -1374,7 +1548,7 @@ def validate_payload(
 def main() -> int:
     _assert_sandbox()
     parser = argparse.ArgumentParser(
-        description="Validate single-paper CFST extraction JSON v2.2. Requires CFST_SANDBOX=1."
+        description="Validate single-paper CFST extraction JSON v2.3. Requires CFST_SANDBOX=1."
     )
     parser.add_argument("--json-path", required=True, help="Path to extraction JSON file.")
     parser.add_argument(
@@ -1397,7 +1571,7 @@ def main() -> int:
         "--expect-count",
         type=int,
         default=None,
-        help="Optional expected total kept CFST count across Group_A/B/C plus excluded_specimens.",
+        help="Optional expected total kept CFST specimen count across Group_A/B/C.",
     )
     args = parser.parse_args()
 
