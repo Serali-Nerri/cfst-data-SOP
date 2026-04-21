@@ -230,6 +230,8 @@ Recommended `schema_version` value:
 
 - `cfst-paper-extractor-v2.3`
 
+Keep this identifier stable for schema compatibility. It is a dataset/schema version string, not the parent skill name.
+
 Published `output/<paper_id>.json` files are the canonical dataset artifact. Any downstream tabular conversion is project-specific and outside this skill's canonical schema.
 
 Use the schema description below as the worker's example source of truth. Do not inspect `runs/`, prior outputs, or unrelated papers to infer JSON shape.

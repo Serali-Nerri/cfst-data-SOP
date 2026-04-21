@@ -4,18 +4,34 @@
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
 import shutil
-import sys
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable, cast
 
-SCRIPT_DIR = Path(__file__).resolve().parent
-if str(SCRIPT_DIR) not in sys.path:
-    sys.path.insert(0, str(SCRIPT_DIR))
+DEFAULT_EXTRACTOR_SKILL_DIR = Path(".codex/skills/cfst-column-extractor")
 
-from validate_single_output import validate_payload  # noqa: E402
+ValidatePayload = Callable[[Any, bool | None, bool, int | None], tuple[list[str], list[str], int]]
+
+
+def load_validate_payload(extractor_skill_dir: Path) -> ValidatePayload:
+    validator_path = extractor_skill_dir / "scripts" / "validate_single_output.py"
+    if not validator_path.is_file():
+        raise FileNotFoundError(f"validator not found: {validator_path}")
+
+    spec = importlib.util.spec_from_file_location("cfst_child_validate_single_output", validator_path)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"failed to load validator module: {validator_path}")
+
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    validate_payload = getattr(module, "validate_payload", None)
+    if not callable(validate_payload):
+        raise AttributeError(f"validate_payload not found in {validator_path}")
+    return cast(ValidatePayload, validate_payload)
 
 
 def read_json(path: Path) -> Any:
@@ -62,16 +78,17 @@ def publish_one(
     dest_json: Path,
     strict_rounding: bool,
     expect_count: int | None,
+    validate_payload: ValidatePayload,
 ) -> tuple[bool, str]:
     if not source_json.exists():
         return False, f"missing worker output: {source_json}"
 
     payload = read_json(source_json)
-    errors, warnings, _total = validate_payload(
+    errors, warnings, _ = validate_payload(
         payload,
-        expect_valid=payload.get("is_valid"),
-        strict_rounding=strict_rounding,
-        expect_count=expect_count,
+        payload.get("is_valid"),
+        strict_rounding,
+        expect_count,
     )
     if warnings:
         for warning in warnings:
@@ -91,6 +108,12 @@ def main() -> int:
     parser.add_argument("--output-dir", type=Path, required=True, help="Final output directory.")
     parser.add_argument("--publish-log", type=Path, required=True, help="JSONL publish log path.")
     parser.add_argument(
+        "--extractor-skill-dir",
+        type=Path,
+        default=DEFAULT_EXTRACTOR_SKILL_DIR,
+        help="Path to the child extractor skill used to validate worker outputs.",
+    )
+    parser.add_argument(
         "--batch-state",
         type=Path,
         default=None,
@@ -108,6 +131,12 @@ def main() -> int:
         help="Fail publication when numeric rounding is not 0.001.",
     )
     args = parser.parse_args()
+
+    try:
+        validate_payload = load_validate_payload(args.extractor_skill_dir.resolve())
+    except (AttributeError, FileNotFoundError, ImportError) as exc:
+        print(f"[FAIL] {exc}")
+        return 1
 
     manifest = read_json(args.batch_manifest)
     papers = manifest.get("papers", [])
@@ -139,6 +168,7 @@ def main() -> int:
             dest_json=dest_json,
             strict_rounding=args.strict_rounding,
             expect_count=expect_count,
+            validate_payload=validate_payload,
         )
         log_item = {
             "timestamp": datetime.now(timezone.utc).isoformat(),

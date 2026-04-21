@@ -16,6 +16,8 @@ import sys
 from pathlib import Path, PurePosixPath
 
 
+DEFAULT_EXTRACTOR_SKILL_DIR = ".codex/skills/cfst-column-extractor"
+
 SYSTEM_RO_PATHS = (
     "/usr",
     "/bin",
@@ -65,7 +67,7 @@ def _resolve_mount_relpath(raw_rel: str, label: str) -> str:
     return PurePosixPath(*cleaned_parts).as_posix()
 
 
-def _resolve_host_path(cwd: Path, raw_path: str, label: str) -> Path:
+def _resolve_host_path(cwd: Path, raw_path: str) -> Path:
     host_path = Path(raw_path)
     return (cwd / host_path).resolve() if not host_path.is_absolute() else host_path.resolve()
 
@@ -98,8 +100,8 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--skill-dir-relpath",
-        default=".codex/skills/cfst-paper-extractor",
-        help="Skill folder path relative to worktree root.",
+        default=DEFAULT_EXTRACTOR_SKILL_DIR,
+        help="Extractor skill folder path relative to worktree root.",
     )
     parser.add_argument(
         "--output-dir",
@@ -155,7 +157,7 @@ def main() -> int:
 
     try:
         if args.host_output_dir:
-            output_abs = _resolve_host_path(cwd, args.host_output_dir, "Host output dir")
+            output_abs = _resolve_host_path(cwd, args.host_output_dir)
             output_rel = _resolve_mount_relpath(args.output_dir, "Output dir")
         else:
             output_abs, output_rel = _resolve_under(worktree_path, args.output_dir, "Output dir")

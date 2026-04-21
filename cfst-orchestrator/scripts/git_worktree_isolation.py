@@ -13,6 +13,9 @@ import time
 from pathlib import Path
 
 
+DEFAULT_EXTRACTOR_SKILL_DIR = ".codex/skills/cfst-column-extractor"
+
+
 def _run(
     cmd: list[str],
     cwd: Path | None = None,
@@ -158,7 +161,7 @@ def _create(args: argparse.Namespace) -> int:
     if not repo_root:
         return _fail(
             "Current directory is not a git repository. Run "
-            "`python .codex/skills/cfst-paper-extractor/scripts/bootstrap_git_repo.py --repo-root . --initial-empty-commit` "
+            "`python .codex/skills/cfst-orchestrator/scripts/bootstrap_git_repo.py --repo-root . --initial-empty-commit` "
             "first, then retry.",
             code=2,
         )
@@ -287,7 +290,7 @@ def _remove(args: argparse.Namespace) -> int:
     if not repo_root:
         return _fail(
             "Current directory is not a git repository. Run "
-            "`python .codex/skills/cfst-paper-extractor/scripts/bootstrap_git_repo.py --repo-root . --initial-empty-commit` "
+            "`python .codex/skills/cfst-orchestrator/scripts/bootstrap_git_repo.py --repo-root . --initial-empty-commit` "
             "first, then retry.",
             code=2,
         )
@@ -353,8 +356,8 @@ def _build_parser() -> argparse.ArgumentParser:
     create.add_argument("--paper-dir", required=True, help="Paper path under repository root.")
     create.add_argument(
         "--skill-dir",
-        default=".codex/skills/cfst-paper-extractor",
-        help="Skill folder path under repository root.",
+        default=DEFAULT_EXTRACTOR_SKILL_DIR,
+        help="Extractor skill folder path under repository root.",
     )
     create.add_argument(
         "--worktrees-root",

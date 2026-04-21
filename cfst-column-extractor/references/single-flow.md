@@ -12,12 +12,12 @@ Section map:
 ## 1. Worker Contract
 
 - process exactly one paper PDF
-- treat the parent-supplied worker brief plus this file and `references/extraction-rules.md` as the complete worker contract
+- treat the parent-supplied worker brief, `SKILL.md`, this file, and `references/extraction-rules.md` as the complete worker contract
 - read the owned paper through the canonical sequence `pdf_info` → `pdf_text` → optional `pdf_montage` → `pdf_pages` → `view_image`; run sandbox-only helpers only through the parent-provided `worker_sandbox.py` command
 - use `pdf_text` output only for page navigation and keyword search; never extract specimen values from the text layer
 - `scripts/safe_calc.py` and `scripts/validate_single_output.py` require `CFST_SANDBOX=1`; do not call them directly from the parent shell
-- read only the owned paper PDF and the two worker references by default
-- do not read `SKILL.md`, `runs/`, prior outputs, or `scripts/` to infer schema, validation, or path rules
+- read only the owned paper PDF, `SKILL.md`, and the two worker references by default
+- do not read `runs/`, prior outputs, or `scripts/` to infer schema, validation, or path rules
 - when the parent provides both `temp_json_host_path` and `temp_json_workspace_path`, write the JSON on disk to `temp_json_host_path`; the workspace path is the sandbox-visible alias of that same file
 - never create or rely on a worktree-local relative `runs/...` JSON path
 - before building the final JSON, prepare one structured extraction draft at `output/tmp/<paper_id>/_scratch/extraction_draft.yaml`; do not write a second JSON artifact on disk
@@ -40,7 +40,7 @@ The worker receives:
 - `temp_json_workspace_path`: sandbox-visible JSON path inside `output_dir`
 - `temp_json_host_path`: host-backed JSON path that must be written on disk
 
-These fields, plus the parent brief and the two worker references, should be enough to execute the paper without reading extra scripts or repository files for hidden rules.
+These fields, plus the parent brief, `SKILL.md`, and the two worker references, should be enough to execute the paper without reading extra scripts or repository files for hidden rules.
 
 The canonical PDF-reading sequence is `pdf_info` → `pdf_text` → optional `pdf_montage` → `pdf_pages(paths_only=true)` → `view_image`. `pdf_text` returns a `cache_path` pointing to the MCP-managed cached text-layer JSON file and can optionally inline all pages, a preview subset, or only matched pages. Prefer metadata plus `cache_path` when you only need navigation. Use `pdf_montage` only as a navigation/comparison aid when several already-identified pages need to be seen side by side.
 

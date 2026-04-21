@@ -1,0 +1,4 @@
+interface:
+  display_name: "CFST Column Extractor"
+  short_description: "Extract single-paper CFST column JSON"
+  default_prompt: "Use $cfst-column-extractor to extract one paper into schema-v2.3 CFST column JSON with image-first reading, shared_context, series_definitions, ordinary_decisions scratch YAML, and sandbox validation."

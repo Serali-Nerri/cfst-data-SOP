@@ -1,0 +1,4 @@
+interface:
+  display_name: "CFST Orchestrator"
+  short_description: "Orchestrate batch CFST extraction"
+  default_prompt: "Use $cfst-orchestrator to prepare batch manifests, launch isolated per-paper workers with $cfst-column-extractor, track retries/state, and publish validated schema-v2.3 CFST column outputs."
