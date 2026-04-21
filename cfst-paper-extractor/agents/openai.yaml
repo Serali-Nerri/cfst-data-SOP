@@ -1,0 +1,4 @@
+interface:
+  display_name: "CFST Paper Extractor"
+  short_description: "Extract and validate v2.2 CFST paper JSON"
+  default_prompt: "Use $cfst-paper-extractor to extract schema-v2.2 CFST JSON with authoritative ordinary_decisions scratch YAML, explicit `material_modifiers=[]` proof on ordinary rows, grouped excluded_specimens, and sandbox validation."
