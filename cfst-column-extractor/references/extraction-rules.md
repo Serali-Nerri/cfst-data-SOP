@@ -7,7 +7,7 @@ Section map:
 - `## 1. Target Scope`: decide whether the paper is usable and whether a specimen is in scope at all.
 - `## 2. Ordinary-CFST Gate`: tag each kept CFST column specimen as ordinary or non-ordinary.
 - `## 3-7`: build the schema-v2.3 JSON shape, shared context, series context, and specimen rows.
-- `## 8-12`: apply evidence, loading, numeric, length, and invalid-output rules.
+- `## 8-12`: apply evidence source order, loading, numeric, length, and invalid-output rules.
 
 ## 1. Target Scope
 
@@ -584,7 +584,7 @@ Validator rules apply to the **resolved** values, not only to direct row keys.
 
 ## 8. Concrete-Strength Basis Rules
 
-Resolve `fc_basis` using this priority order:
+Resolve `fc_basis` from readable `full.md` text/tables plus the paired table images when available; use rendered PDF pages when Markdown evidence is missing, ambiguous, or conflicting. Use this priority order:
 
 1. explicit statements in `Materials`, `Specimens`, `Concrete properties`, notation sections, specimen tables, and table footnotes
 2. explicit specimen/test descriptions such as `150 mm cube`, `100x200 cylinder`, `ASTM C39 cylinder`, `JIS A 1108`, `JIS A 1132`, or prism / axial-compression concrete-strength wording
@@ -608,12 +608,23 @@ Apply these rules:
 
 Each specimen row requires a concise `source_evidence` string.
 
+Default extraction evidence order:
+
+1. Use `full.md` as the default narrative, section, caption, table, footnote, and image-link index when it is present and readable.
+2. Open only the referenced images needed for specimen tables, material/result tables, geometry, setup/loading figures, failure descriptions, and conflict resolution.
+3. For any table used as evidence, read both the `full.md` HTML table and its corresponding semantic table image under or near the caption. The HTML table is a structural/search aid; the table image is the visual check.
+4. Use the original PDF as fallback and conflict resolver when `full.md` is absent, unreadable, garbled, contaminated beyond reliable article separation, missing critical sections, or when images are missing/cropped/ambiguous.
+5. Do not read `content_list_v2.json` by default for LLM extraction. It is only a preprocessing, repair, locator, or debugging artifact and must not be treated as primary specimen evidence.
+
+For specimen values, units, signs, row boundaries, merged cells, symbols, and table footnotes, visual evidence is authoritative. Prefer the paired table image when available; render the original PDF page when the table image is unavailable or unclear. If OCR/HTML text conflicts with visual evidence, use the visual evidence and note the conflict.
+
 `source_evidence` must:
 
 - be a non-empty single-line string
-- identify the PDF page(s) and table / figure / text locator(s) for each stored value
+- identify the `full.md` table / figure / text locator(s), referenced image path(s), and PDF page(s) when known for each stored value
 - state explicitly when `n_exp` is a reported group average rather than an individually measured row value
 - explain derivations or notation resolutions inline (for example, unit conversion, `r0 = D/2`, `fck` notation resolved to cube basis)
+- explain any visual-vs-OCR conflict that affected a stored value
 - explain any important inherited exception when `context_overrides`, `series_id`, or `specimen_note` is needed
 
 Accepted page/locator wording may be English or Chinese. `Page`, `页`, `Table`, `Fig.`, `Figure`, `text`, `section`, `表`, `图`, `正文`, and explicit section forms such as `第2.3节` are all valid locator styles.
@@ -622,7 +633,10 @@ When page localization cannot be determined, state the best available locator ra
 
 ## 10. Loading-Mode Rules
 
-- determine paper-level loading mode from setup-figure evidence when available
+- determine paper-level loading mode from setup/loading figure evidence when available
+- when `full.md` references a setup/loading image, open that image before deciding loading mode
+- if the referenced setup/loading image is missing, cropped, unclear, or conflicts with text, render the original PDF page for confirmation
+- do not decide loading mode from text alone when setup image evidence exists
 - preserve specimen-level loading mode after context resolution in every row
 - if specimen `loading_mode = axial`, enforce `e1 = 0` and `e2 = 0`
 - if specimen `loading_mode = eccentric`, at least one of `e1`, `e2` must be nonzero

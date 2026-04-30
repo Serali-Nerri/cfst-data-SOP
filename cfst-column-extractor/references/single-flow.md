@@ -6,17 +6,19 @@ Section map:
 
 - `## 1-3`: enforce worker scope, required inputs, and execution order.
 - `## 4-5`: apply validity and ordinary-CFST gates.
-- `## 6-10`: resolve setup figures, read PDF pages directly, build shared context, and preserve numeric and evidence traces.
+- `## 6-10`: resolve setup figures, apply Markdown/images/PDF evidence order, build shared context, and preserve numeric and evidence traces.
 - `## 11-12`: enforce validation expectations and final output goals.
 
 ## 1. Worker Contract
 
 - process exactly one paper PDF
 - treat the parent-supplied worker brief, `SKILL.md`, this file, and `references/extraction-rules.md` as the complete worker contract
-- read the owned paper through the canonical sequence `pdf_info` → `pdf_text` → optional `pdf_montage` → `pdf_pages` → `view_image`; run sandbox-only helpers only through the parent-provided `worker_sandbox.py` command
-- use `pdf_text` output only for page navigation and keyword search; never extract specimen values from the text layer
+- read the owned evidence bundle using this default order: usable `full.md` first, referenced `images/` on demand, original PDF as fallback and visual authority for conflicts
+- for evidence tables, always compare the `full.md` HTML table with the corresponding table image when that image is available; the table image or rendered PDF page overrides OCR/HTML text for values, units, symbols, row grouping, merged cells, and footnotes
+- do not read `content_list_v2.json` by default during extraction; use it only for preprocessing/repair tasks such as regenerating crops, fixing Markdown image links, locating blocks, or debugging parser artifacts
+- run sandbox-only helpers only through the parent-provided `worker_sandbox.py` command
 - `scripts/safe_calc.py` and `scripts/validate_single_output.py` require `CFST_SANDBOX=1`; do not call them directly from the parent shell
-- read only the owned paper PDF, `SKILL.md`, and the two worker references by default
+- read only the owned paper PDF, owned rawdata files needed for extraction (`full.md` and referenced `images/`), `SKILL.md`, and the two worker references by default
 - do not read `runs/`, prior outputs, or `scripts/` to infer schema, validation, or path rules
 - when the parent provides both `temp_json_host_path` and `temp_json_workspace_path`, write the JSON on disk to `temp_json_host_path`; the workspace path is the sandbox-visible alias of that same file
 - never create or rely on a worktree-local relative `runs/...` JSON path
@@ -40,9 +42,17 @@ The worker receives:
 - `temp_json_workspace_path`: sandbox-visible JSON path inside `output_dir`
 - `temp_json_host_path`: host-backed JSON path that must be written on disk
 
+The parent may also provide optional evidence paths:
+
+- `rawdata_dir`: directory containing the parsed paper package
+- `full_md_path`: explicit path to `full.md`
+- `images_dir`: directory containing images referenced by `full.md`
+
+If those optional paths are absent, infer them only from the parent brief or obvious owned-paper rawdata path when available. If no rawdata bundle is available, continue with PDF-only fallback rather than failing solely because `full.md` is absent.
+
 These fields, plus the parent brief, `SKILL.md`, and the two worker references, should be enough to execute the paper without reading extra scripts or repository files for hidden rules.
 
-The canonical PDF-reading sequence is `pdf_info` → `pdf_text` → optional `pdf_montage` → `pdf_pages(paths_only=true)` → `view_image`. `pdf_text` returns a `cache_path` pointing to the MCP-managed cached text-layer JSON file and can optionally inline all pages, a preview subset, or only matched pages. Prefer metadata plus `cache_path` when you only need navigation. Use `pdf_montage` only as a navigation/comparison aid when several already-identified pages need to be seen side by side.
+When `full.md` is usable, it is the default narrative/table/caption/image-link index. Referenced images are opened on demand for table verification, setup/loading figures, geometry, materials, results, and other extraction-critical evidence. The original PDF remains the fallback and conflict resolver. `content_list_v2.json` is not an extraction evidence source by default; use it only when repairing or auditing the parsed rawdata package.
 
 Long paper filenames are allowed and do not need to be renamed.
 
@@ -52,18 +62,38 @@ If the PDF file does not exist at the given path or cannot be read by the MCP to
 
 1. Read `references/extraction-rules.md` and this file.
 2. Verify the paper PDF exists at the given path.
-3. Call `pdf_info` on the paper PDF to get the total page count.
-4. Call `pdf_text` to extract the text-layer index for the entire paper.
+3. Locate the owned rawdata bundle when available.
+   - prefer parent-supplied `full_md_path`, `images_dir`, and `rawdata_dir`
+   - otherwise infer only from the owned paper path or parent brief when the match is unambiguous
+   - do not inspect other papers' rawdata directories
+4. Decide the evidence path before extraction.
+   - use Markdown-first mode when `full.md` is present, readable, and can be separated reliably from unrelated article content
+   - use PDF fallback mode when `full.md` is missing, unreadable, garbled, critical sections are absent, or cross-article contamination cannot be separated confidently
+   - use `content_list_v2.json` only for rawdata repair/debugging, not as default LLM evidence
+5. In Markdown-first mode, read `full.md` before rendering PDF pages.
+   - use it to identify title, authors, specimen tables, result tables, materials, notation, setup/loading figures, figure captions, table captions, table footnotes, and image references
+   - ignore clearly unrelated appended article sections; if the article boundary is uncertain, switch to PDF fallback for affected evidence
+6. Open referenced images only when they are extraction-critical.
+   - always open the table image paired with any HTML table used as specimen, material, geometry, or results evidence
+   - open setup/loading, geometry, and failure-mode figures when they affect `loading_mode`, boundary condition, specimen dimensions, or ordinary-gate decisions
+   - do not scan all files under `images/` just because they exist
+7. For each evidence table, perform table dual-reading.
+   - read the HTML table in `full.md` for structure and searchable text
+   - read the corresponding semantic table image under or near the table caption for visual confirmation
+   - preserve table footnotes and notes under the table when they define units, symbols, row groups, averages, concrete-strength basis, or exceptions
+   - if HTML and image disagree, use the table image or rendered PDF page and record the conflict in `source_evidence` or scratch notes
+8. Render the original PDF when any critical evidence is missing, cropped, ambiguous, or conflicting.
+   - call `pdf_info` to get total page metadata when PDF fallback or page localization is needed
+   - call `pdf_text` for page navigation and keyword search, not as the final source for table values
    - prefer `include_pages=false` when you only need metadata, `cache_path`, and optional page-hit metadata
    - use `preview_pages` only when you need a small inline preview
    - use `match_query` plus `matched_pages_only=true` only when you intentionally want just the matched pages inline
-   - if `text_quality < 0.3`, proceed with image-first scanning
-5. Search the text index for keywords to locate target pages:
+9. Search `full.md` and, when needed, the PDF text index for target evidence:
    - specimen tables: `Table`, `表`, `Specimen`, `试件`
-   - material properties: `Material`, `Concrete`, `材料`, `混凝土`, `C30`–`C80`
-   - setup/loading figures: `Fig`, `Figure`, `图`, `loading`, `setup`, `test`
-   - paper metadata: title, authors, abstract on page 1
-6. Build an internal evidence-anchor checklist before extraction:
+   - material properties: `Material`, `Concrete`, `材料`, `混凝土`, `C30`-`C80`
+   - setup/loading figures: `Fig`, `Figure`, `图`, `loading`, `setup`, `test`, `加载`, `装置`
+   - paper metadata: title, authors, abstract on page 1 or first Markdown section
+10. Build an internal evidence-anchor checklist before extraction:
    - `design_table_page`
    - `results_table_page`
    - `replicate_average_rule_page`
@@ -71,7 +101,10 @@ If the PDF file does not exist at the given path or cannot be read by the MCP to
    - `loading_program_page`
    - `concrete_basis_page`
    - `steel_properties_page`
-7. Build a structured extraction draft before final JSON assembly.
+   - `full_md_table_locator`
+   - `table_image_path`
+   - `setup_image_path`
+11. Build a structured extraction draft before final JSON assembly.
    - write exactly one non-canonical scratch file at `output/tmp/<paper_id>/_scratch/extraction_draft.yaml`
    - do not write a second JSON file on disk
    - required sections:
@@ -119,45 +152,45 @@ If the PDF file does not exist at the given path or cannot be read by the MCP to
 
    Verify `material_modifiers` against the remaining non-ordinary blacklist in `extraction-rules.md` section 2.2 while filling `ordinary_decisions`. Record the specimen-level ordinary-gate inputs in the same record: `section_shape`, `steel_type`, `concrete_type`, `loading_pattern`, `test_temperature`, `loading_regime`, `durability_conditioning`, `member_modifiers`, and `material_modifiers`.
 
-8. Use `pdf_montage` only when it helps compare already-identified pages side by side.
+12. Use `pdf_montage` only when it helps compare already-identified PDF pages side by side.
    - montage is for navigation/comparison only, never for final value reading
    - low DPI broad scanning is optional and conditional; if you need it, prefer roughly `150-200 dpi`
-9. Call `pdf_pages(paths_only=true)` on the identified target pages to render and cache them without injecting images into context.
+13. Call `pdf_pages(paths_only=true)` on identified target pages when PDF visual evidence is needed.
    - use normal single-page reading at about `300 dpi`
    - if a page has small headers, footnotes, merged cells, or symbol ambiguity, rerender that page at higher DPI before reading values
-10. Use `view_image` on each target page path to inspect it visually. Read values directly from the rendered single-page images. The single-page image is the source of truth for all specimen values.
-11. Identify specimen-bearing tables, setup/loading figures, grouped-average notes, and non-CFST control rows from the viewed page images.
-12. Resolve concrete-strength basis evidence from `Materials`, `Specimens`, `Concrete properties`, notation sections, and table footnotes before assigning `fc_basis`. First search for nearby concrete-strength-grade signals such as `C30`, `C40`, `C50`, `C60`, or `C60/75`, then interpret symbols such as `fck`, `fc`, `f'c`, or `Fc`.
-13. Run the validity gate.
-14. Build the kept CFST column specimen universe for this paper.
+14. Use `view_image` on each needed rawdata image or rendered PDF page. For numeric table values, merged cells, units, symbols, signs, row boundaries, and footnotes, visual table evidence overrides OCR/HTML text.
+15. Identify specimen-bearing tables, setup/loading figures, grouped-average notes, and non-CFST control rows from the combined `full.md`, referenced-image, and PDF evidence.
+16. Resolve concrete-strength basis evidence from `Materials`, `Specimens`, `Concrete properties`, notation sections, specimen tables, table images, and table footnotes before assigning `fc_basis`. First search for nearby concrete-strength-grade signals such as `C30`, `C40`, `C50`, `C60`, or `C60/75`, then interpret symbols such as `fck`, `fc`, `f'c`, or `Fc`.
+17. Run the validity gate.
+18. Build the kept CFST column specimen universe for this paper.
    - keep only CFST **column** specimens in the extraction universe
    - exclude beam-columns, joints, frame subassemblies, and non-CFST controls before ordinary tagging
-15. Resolve specimen-level environment and conditioning evidence needed for the ordinary-CFST gate.
-16. Resolve the setup figure from PDF page image evidence.
-17. Extract the kept CFST specimen rows directly from PDF page images.
-18. When a paper reports grouped average measured capacity for an explicit repeated-specimen group, expand the reported group label `G` into `G-1 ... G-q`, assign that same average `n_exp` to each defensibly identified member row, and mark `group_average_n_exp`.
-19. Normalize units and derived values with `scripts/safe_calc.py`.
-20. Run the ordinary-CFST specimen-level evaluation.
+19. Resolve specimen-level environment and conditioning evidence needed for the ordinary-CFST gate.
+20. Resolve the setup/loading figure from referenced image evidence when available, otherwise from rendered PDF page evidence.
+21. Extract the kept CFST specimen rows from the best available combined evidence; use table/figure images or rendered PDF pages to settle any conflict with HTML/OCR text.
+22. When a paper reports grouped average measured capacity for an explicit repeated-specimen group, expand the reported group label `G` into `G-1 ... G-q`, assign that same average `n_exp` to each defensibly identified member row, and mark `group_average_n_exp`.
+23. Normalize units and derived values with `scripts/safe_calc.py`.
+24. Run the ordinary-CFST specimen-level evaluation.
     - fill the `ordinary_decisions` section in `extraction_draft.yaml` first
     - judge ambient/static/durability-conditioning status per specimen or per explicitly labeled specimen group
     - apply the remaining non-ordinary modifier blacklist from `extraction-rules.md` section 2.2 before committing any `is_ordinary: true` entry
-21. Derive schema-v2.3 context layers.
+25. Derive schema-v2.3 context layers.
     - promote only truly universal values into top-level `shared_context`
     - promote subgroup-wide values into `series_definitions[*].shared_context`
     - keep exceptions as direct specimen fields or `context_overrides`
     - use `specimen_note` only when a difference cannot be captured structurally
-22. Build all kept specimens as full rows in `Group_A` / `Group_B` / `Group_C`.
+26. Build all kept specimens as full rows in `Group_A` / `Group_B` / `Group_C`.
     - ordinary rows stay in those groups with `is_ordinary=true`
     - non-ordinary rows also stay in those groups with `is_ordinary=false` and non-empty `ordinary_exclusion_reasons`
     - do not create top-level `excluded_specimens`
-23. Derive paper-level `is_ordinary_cfst` and `ordinary_filter` summary from the final kept-row set.
+27. Derive paper-level `is_ordinary_cfst` and `ordinary_filter` summary from the final kept-row set.
     - `ordinary_filter.special_factors` must be the sorted unique paper-level base-concrete tags derived from `ordinary_decisions`
     - allowed values only: `high_strength_concrete`, `lightweight_concrete`, `recycled_aggregate`, `self_consolidating_concrete`, `alkali_activated_concrete`, `geopolymer_concrete`, `expansive_concrete`
-24. Build schema-v2.3 JSON from `output/tmp/<paper_id>/_scratch/extraction_draft.yaml` plus the final page-image evidence.
-25. Write that JSON on disk to `temp_json_host_path` from the worker brief. Do not create a worktree-local relative `runs/...` JSON path.
-26. Validate that same file through `temp_json_workspace_path` with the parent-provided `worker_sandbox.py` command, and pass `--scratch-yaml-path output/tmp/<paper_id>/_scratch/extraction_draft.yaml`.
-27. If validation fails for schema, data, or evidence reasons, repair once, overwrite the same host-backed JSON path, and validate once more.
-28. If validation fails for path, mount, sandbox startup, or ownership reasons, stop and report the failure; do not relocate the JSON and do not create a second copy elsewhere.
+28. Build schema-v2.3 JSON from `output/tmp/<paper_id>/_scratch/extraction_draft.yaml` plus the final evidence anchors.
+29. Write that JSON on disk to `temp_json_host_path` from the worker brief. Do not create a worktree-local relative `runs/...` JSON path.
+30. Validate that same file through `temp_json_workspace_path` with the parent-provided `worker_sandbox.py` command, and pass `--scratch-yaml-path output/tmp/<paper_id>/_scratch/extraction_draft.yaml`.
+31. If validation fails for schema, data, or evidence reasons, repair once, overwrite the same host-backed JSON path, and validate once more.
+32. If validation fails for path, mount, sandbox startup, or ownership reasons, stop and report the failure; do not relocate the JSON and do not create a second copy elsewhere.
 
 ## 4. Validity Gate
 
@@ -220,34 +253,37 @@ After the kept specimen universe is tagged, derive paper-level fields:
 
 ## 6. Setup Figure Resolution
 
-- identify the setup/loading figure from PDF page images
-- look for pages containing loading apparatus diagrams, test setup schematics, or captions such as `Fig.`, `Figure`, `loading device`, `test setup`
+- identify the setup/loading figure from `full.md` figure captions and referenced images when Markdown-first mode is usable; otherwise identify it from rendered PDF page images
+- look for images or pages containing loading apparatus diagrams, test setup schematics, or captions such as `Fig.`, `Figure`, `图`, `loading device`, `test setup`, `加载装置`
 - determine loading mode from visual evidence when possible
+- if `full.md` references a setup/loading image, open that image before deciding loading mode
+- if the referenced setup/loading image is missing, cropped, unclear, or contradicts text, render the original PDF page for confirmation
 - do not decide loading mode from text alone when setup image evidence exists
-- note the PDF page number where the setup figure appears
+- note the Markdown figure locator and image path; also note the PDF page number when known or when PDF fallback was used
 
 Store the resolved setup trace in:
 
 - `paper_level.loading_mode`
-- `paper_level.setup_figure` (with `image_path = null` and `page` set to the PDF page number)
+- `paper_level.setup_figure` (with `image_path` set to the referenced image when available, otherwise `null`; set `page` to the PDF page number when known)
 - resolved specimen `loading_mode`
 
-## 7. Direct PDF Reading
+## 7. Evidence Reading Order
 
-The worker reads the paper using a metadata-first, then text-and-image approach:
-1. `pdf_info` captures total-page metadata and supports page-planning.
-2. `pdf_text` extracts a text-layer index for page navigation and keyword search.
-3. `pdf_montage` may be used on already-identified pages for side-by-side comparison.
-4. `pdf_pages(paths_only=true)` renders target pages to cached image files.
-5. `view_image` loads individual page images for visual inspection.
+The worker reads the paper using a Markdown-first, image-on-demand, PDF-fallback approach:
 
-The text layer is a navigation aid only. Do not extract specimen values from it.
+1. Use `full.md` first when present and readable. It is the default source for narrative context, captions, section order, HTML tables, table notes, and image references.
+2. Open referenced `images/` only when needed for specimen tables, material/result tables, geometry, setup/loading figures, failure descriptions, or conflict resolution.
+3. For tables, read both the HTML table in `full.md` and the paired table image. Treat the HTML table as a structural/search aid and the table image as the visual check.
+4. Use the original PDF when Markdown/images are unavailable, incomplete, garbled, visibly cropped, or contradictory.
+5. When PDF evidence is needed, `pdf_info` captures total-page metadata, `pdf_text` supports navigation and keyword search, `pdf_montage` compares already-identified pages, `pdf_pages(paths_only=true)` renders target pages, and `view_image` loads individual page images for visual inspection.
 
-`pdf_montage` is also a navigation aid only. Use it to compare a few pages side by side, not to read specimen values.
+Markdown prose may be used for ordinary narrative statements when it is readable and internally consistent. OCR-derived HTML tables remain provisional until checked against their table image or the PDF page.
 
-When `pdf_text` cannot localize the paper reliably, you may do a low-DPI visual sweep to find candidate pages. Treat that sweep as page discovery only. Re-render any page that supplies specimen values, table headers, footnotes, or row boundaries at normal or high DPI and confirm those values through single-page `view_image`.
+`content_list_v2.json` is not part of the default evidence packet for LLM extraction. It may be used only for preprocessing or repair: regenerating table/figure crops, fixing Markdown image links, locating parser blocks, or debugging rawdata artifacts.
 
-The page image is the single source of truth for all specimen values including row boundaries, merged cells, units, symbols, and signs.
+When `pdf_text` cannot localize the paper reliably, you may do a low-DPI visual sweep to find candidate pages. Treat that sweep as page discovery only. Re-render any page that supplies specimen values, table headers, footnotes, row boundaries, setup figures, or conflicting evidence at normal or high DPI and confirm those values through single-page `view_image`.
+
+For specimen values, units, symbols, signs, row boundaries, merged cells, and table footnotes, the visual source is authoritative: paired table image first, rendered PDF page when needed. If visual evidence and HTML/OCR text conflict, use the visual evidence and document the conflict.
 
 ## 8. Context-Building Rules
 
@@ -279,9 +315,10 @@ Every specimen row must contain a concise `source_evidence` string.
 `source_evidence` must:
 
 - be a non-empty single-line string
-- identify the PDF page(s) and table / figure / text locator(s) for each stored value
+- identify the `full.md` table / figure / text locator(s), referenced image path(s), and PDF page(s) when known for each stored value
 - state explicitly when `n_exp` is a reported group average rather than an individually measured value
 - explain derivations or notation resolutions inline
+- explain any visual-vs-OCR conflict that affected a stored value
 - explain any important series-level or row-level exception when a row differs from `shared_context`
 
 ## 11. Validation Expectations
