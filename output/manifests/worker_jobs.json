@@ -1,0 +1,10 @@
+[
+  {
+    "paper_id": "A1-5",
+    "paper_pdf_relpath": "rawdata/[A1-5]",
+    "worker_output_json_path": "/home/thelya/Work/Sop-cfstdata/output/tmp/A1-5/A1-5.json",
+    "final_output_json_path": "/home/thelya/Work/Sop-cfstdata/output/output/A1-5.json",
+    "expected_specimen_count": null,
+    "status": "prepared"
+  }
+]

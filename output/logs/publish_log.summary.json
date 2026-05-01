@@ -1,0 +1,19 @@
+{
+  "generated_at": "2026-05-01T06:15:19.100318+00:00",
+  "requested_paper_ids": [
+    "A1-5"
+  ],
+  "published": 1,
+  "failed": 0,
+  "items": [
+    {
+      "timestamp": "2026-05-01T06:15:19.105302+00:00",
+      "paper_id": "A1-5",
+      "source_path": "output/tmp/A1-5/A1-5.json",
+      "destination_path": "output/output/A1-5.json",
+      "overwritten": false,
+      "published": true,
+      "message": "published"
+    }
+  ]
+}

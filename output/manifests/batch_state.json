@@ -1,0 +1,15 @@
+{
+  "schema_version": "cfst-batch-state-v1",
+  "generated_at": "2026-05-01T06:05:06Z",
+  "paper_count": 1,
+  "papers": [
+    {
+      "paper_id": "A1-5",
+      "status": "published",
+      "retry_count": 0,
+      "validated": true,
+      "published": true,
+      "last_error": null
+    }
+  ]
+}

@@ -43,6 +43,19 @@ def write_json(path: Path, payload: Any) -> None:
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
+def payload_is_valid(payload: Any) -> bool | None:
+    if not isinstance(payload, dict):
+        return None
+    paper = payload.get("paper")
+    if not isinstance(paper, dict):
+        return None
+    validity = paper.get("validity")
+    if not isinstance(validity, dict):
+        return None
+    value = validity.get("is_valid")
+    return value if isinstance(value, bool) else None
+
+
 def append_jsonl(path: Path, payload: Any) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("a", encoding="utf-8") as handle:
@@ -86,7 +99,7 @@ def publish_one(
     payload = read_json(source_json)
     errors, warnings, _ = validate_payload(
         payload,
-        payload.get("is_valid"),
+        payload_is_valid(payload),
         strict_rounding,
         expect_count,
     )

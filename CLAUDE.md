@@ -16,8 +16,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   - `cfst-orchestrator/agents/openai.yaml`: parent skill display metadata
 - The child skill owns one-paper extraction policy:
   - `cfst-column-extractor/SKILL.md`: single-paper extraction contract
-  - `cfst-column-extractor/references/extraction-rules.md`: schema-v2.3 rules, ordinary-CFST gate, evidence and numeric rules
-  - `cfst-column-extractor/references/single-flow.md`: one-paper worker execution contract
+  - `cfst-column-extractor/references/extraction-rules.md`: scope and extraction rules for all CFST column ultimate-capacity data
+  - `cfst-column-extractor/references/fc-basis-rules.md`: concrete-strength basis decision framework for `fco_mpa` / `fc_type`
+  - `cfst-column-extractor/references/section_shapes.jpg`: visual reference for section groups and `r0_mm`
+  - `cfst-column-extractor/references/cfst-extraction-schema.json`: machine-readable schema 1.0.0
+  - `cfst-column-extractor/references/json-schema-requirements.md`: readable JSON shape, examples, inheritance rules, and validation expectations
   - `cfst-column-extractor/scripts/*.py`: sandbox-only extraction helpers such as validation and safe arithmetic
   - `cfst-column-extractor/agents/openai.yaml`: child skill display metadata
 
@@ -66,7 +69,6 @@ python .codex/skills/cfst-orchestrator/scripts/worker_sandbox.py \
   -- \
   python3 .codex/skills/cfst-column-extractor/scripts/validate_single_output.py \
     --json-path output/tmp/<paper_id>/<paper_id>.json \
-    --scratch-yaml-path output/tmp/<paper_id>/_scratch/extraction_draft.yaml \
     --strict-rounding
 ```
 
@@ -102,12 +104,9 @@ python .codex/skills/cfst-orchestrator/scripts/checkpoint_output_commits.py \
 - Isolation is enforced in two layers:
   - `git_worktree_isolation.py` creates a minimal per-paper git worktree
   - `worker_sandbox.py` runs the worker command under `bwrap`, mounting only the owned paper input read-only, the skill docs/scripts read-only, and the declared output directory read-write
-- Worker-authoritative sources are the owned PDF plus the child skill files `cfst-column-extractor/references/extraction-rules.md` and `cfst-column-extractor/references/single-flow.md`. The extraction contract is image-first: use `pdf_text` for page discovery, then confirm specimen values from rendered page images via `pdf_pages` and `view_image`, not from the text layer.
-- Each worker writes exactly two temporary artifacts under `output/tmp/<paper_id>/`:
-  - `<paper_id>.json`
-  - `_scratch/extraction_draft.yaml`
-  The scratch YAML is not optional bookkeeping; its `ordinary_decisions` section is authoritative, and the child validator checks scratch/JSON consistency.
+- Worker-authoritative evidence is the owned rawdata bundle plus the owned PDF fallback. Default to `rawdata/[<paper_id>]/full.md` or the matching rawdata directory, open only referenced `images/` files as needed, use the PDF only when Markdown/images are missing, unreadable, incomplete, or conflicting, and use `content_list_v2.json` only for locating parsed/PDF blocks. The child skill files are `cfst-column-extractor/SKILL.md`, `cfst-column-extractor/references/extraction-rules.md`, `cfst-column-extractor/references/fc-basis-rules.md`, `cfst-column-extractor/references/section_shapes.jpg`, `cfst-column-extractor/references/cfst-extraction-schema.json`, and `cfst-column-extractor/references/json-schema-requirements.md`.
+- Each worker writes exactly one temporary JSON artifact under `output/tmp/<paper_id>/`: `<paper_id>.json`.
 - Published artifacts are canonical only after `publish_validated_output.py` copies validated temp JSON into `output/output/<paper_id>.json`. Workers should never write final outputs directly.
 - `cfst-column-extractor/scripts/safe_calc.py` and `cfst-column-extractor/scripts/validate_single_output.py` are sandbox-only helpers. They require `CFST_SANDBOX=1`, so invoke them through `worker_sandbox.py`, not directly from the host shell.
-- External runtime assumptions that are not vendored in the repo: a git repository with `HEAD`, `bwrap`/bubblewrap, `pdfinfo`, and Python with `PyYAML` available for validation.
+- External runtime assumptions that are not vendored in the repo: a git repository with `HEAD`, `bwrap`/bubblewrap, `pdfinfo`, and Python available for validation.
 - There is no README, no repo-local Cursor rule, and no Copilot instruction file in this repo. The source of truth is the parent `cfst-orchestrator/SKILL.md` for orchestration and the child `cfst-column-extractor/` files for one-paper extraction behavior.

@@ -12,7 +12,21 @@ Use this skill as the parent orchestrator. Keep the parent focused on batch prep
 - `processed/` contains source PDFs whose filenames start with citation tags like `[A2-104]`.
 - `output/manifests/worker_jobs.json` is the source of truth for per-paper readiness, `paper_pdf_relpath`, and `worker_output_json_path`.
 - Workers write temp artifacts under `output/tmp/<paper_id>/`; only the parent publishes canonical JSON into `output/output/`.
-- The child skill owns the one-paper extraction contract, scratch YAML contract, schema rules, and validator logic. Do not duplicate extraction policy in the parent.
+- The child skill owns the one-paper extraction workflow, extraction rules, schema rules, and validator logic. Do not duplicate extraction policy in the parent.
+
+## Child Extraction Contract
+
+This parent skill has no `references/` contract. Keep all parent orchestration guidance in this `SKILL.md`; send workers to the child skill for one-paper extraction.
+
+Use `.codex/skills/cfst-column-extractor/SKILL.md` for the worker execution and validation workflow. The child workflow is rawdata-first: use `rawdata/[<paper_id>]/full.md` or the matching rawdata directory by default, open referenced `images/` only as needed, use the PDF only as fallback/conflict resolver, and use `content_list_v2.json` only for locating parsed/PDF blocks.
+
+Use the child reference files for extraction decisions and schema requirements:
+
+- `.codex/skills/cfst-column-extractor/references/extraction-rules.md`
+- `.codex/skills/cfst-column-extractor/references/fc-basis-rules.md`
+- `.codex/skills/cfst-column-extractor/references/section_shapes.jpg`
+- `.codex/skills/cfst-column-extractor/references/cfst-extraction-schema.json`
+- `.codex/skills/cfst-column-extractor/references/JSON_contract.md`
 
 ## Workflow
 
@@ -68,17 +82,25 @@ Inputs:
 - output_host_path: <output_host_path>
 - temp_json_workspace_path: output/tmp/<paper_id>/<paper_id>.json
 - temp_json_host_path: <worker_output_json_path_from_worker_jobs.json>
+- rawdata_dir: rawdata/[<paper_id>] or the unique rawdata directory whose basename starts with [<paper_id>]
+- full_md_path: <rawdata_dir>/full.md
+- images_dir: <rawdata_dir>/images
+- content_list_path: <rawdata_dir>/content_list_v2.json
 
 Authoritative files inside the worktree:
 - .codex/skills/cfst-column-extractor/SKILL.md
 - .codex/skills/cfst-column-extractor/references/extraction-rules.md
-- .codex/skills/cfst-column-extractor/references/single-flow.md
+- .codex/skills/cfst-column-extractor/references/fc-basis-rules.md
+- .codex/skills/cfst-column-extractor/references/section_shapes.jpg
+- .codex/skills/cfst-column-extractor/references/cfst-extraction-schema.json
+- .codex/skills/cfst-column-extractor/references/JSON_contract.md
 
 Parent-owned constraints:
 - Work only on this one paper.
 - Do not use `.codex/skills/cfst-orchestrator/SKILL.md` as extraction policy.
+- Use `full_md_path` as the default extraction source, open only referenced `images_dir` files as needed, use the PDF only as fallback/conflict resolver, and use `content_list_path` only for locating parsed/PDF blocks.
 - Write exactly one JSON file on disk to `temp_json_host_path`.
-- Build exactly one scratch YAML at `output/tmp/<paper_id>/_scratch/extraction_draft.yaml`.
+- Write no secondary extraction artifacts.
 - Use the child skill files above as the authoritative extraction contract.
 - Run sandbox validation with:
   python .codex/skills/cfst-orchestrator/scripts/worker_sandbox.py \
@@ -91,9 +113,8 @@ Parent-owned constraints:
     -- \
     python3 .codex/skills/cfst-column-extractor/scripts/validate_single_output.py \
       --json-path output/tmp/<paper_id>/<paper_id>.json \
-      --scratch-yaml-path output/tmp/<paper_id>/_scratch/extraction_draft.yaml \
       --strict-rounding
-- If validation fails for schema, data, or evidence reasons, repair once and rerun the same validator command.
+- If validation fails for schema, data, or evidence reasons documented in `.codex/skills/cfst-column-extractor/references/JSON_contract.md`, repair once and rerun the same validator command. If validation fails because of a rule not documented there, stop and report a documentation/validator mismatch.
 - If the sandbox reports a path, mount, or startup failure, stop and return that failure to the parent.
 
 Return exactly:

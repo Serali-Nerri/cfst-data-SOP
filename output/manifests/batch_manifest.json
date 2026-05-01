@@ -1,0 +1,31 @@
+{
+  "schema_version": "cfst-batch-manifest-v3",
+  "generated_at": "2026-05-01T06:05:06Z",
+  "source_layout": "rawdata-bundle",
+  "processed_root": "/home/thelya/Work/Sop-cfstdata/rawdata",
+  "worktree_root": "/home/thelya/Work/Sop-cfstdata",
+  "output_root": "/home/thelya/Work/Sop-cfstdata/output",
+  "git_status": {
+    "is_git_repo": true,
+    "stdout": "true",
+    "stderr": ""
+  },
+  "paper_count": 1,
+  "papers": [
+    {
+      "paper_id": "A1-5",
+      "citation_tag": "[A1-5]",
+      "paper_title_hint": "钢管高强混凝土轴压力学性能的理论分析与试验研究",
+      "expected_specimen_count": null,
+      "processed_pdf": "rawdata/[A1-5]/e443a82f-34d5-4846-a440-813ecdb7c24b_origin.pdf",
+      "paper_pdf_relpath": "rawdata/[A1-5]",
+      "status": "prepared",
+      "layout": {
+        "ready": true,
+        "pdf_file": "e443a82f-34d5-4846-a440-813ecdb7c24b_origin.pdf",
+        "total_pages": 6,
+        "issues": []
+      }
+    }
+  ]
+}
