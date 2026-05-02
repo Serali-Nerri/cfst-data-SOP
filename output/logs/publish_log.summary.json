@@ -1,16 +1,23 @@
 {
-  "generated_at": "2026-05-02T11:16:53.388400+00:00",
-  "requested_paper_ids": [
-    "A1-1"
-  ],
-  "published": 1,
+  "generated_at": "2026-05-02T12:13:57.742622+00:00",
+  "requested_paper_ids": null,
+  "published": 2,
   "failed": 0,
   "items": [
     {
-      "timestamp": "2026-05-02T11:16:53.627000+00:00",
-      "paper_id": "A1-1",
-      "source_path": "/home/thelya/Work/Sop-cfstdata/output/tmp/A1-1/A1-1.json",
-      "destination_path": "/home/thelya/Work/Sop-cfstdata/output/output/A1-1.json",
+      "timestamp": "2026-05-02T12:13:57.976825+00:00",
+      "paper_id": "A1-2",
+      "source_path": "/home/thelya/Work/Sop-cfstdata/output/tmp/A1-2/A1-2.json",
+      "destination_path": "/home/thelya/Work/Sop-cfstdata/output/output/A1-2.json",
+      "overwritten": false,
+      "published": true,
+      "message": "published"
+    },
+    {
+      "timestamp": "2026-05-02T12:13:58.012316+00:00",
+      "paper_id": "A1-4",
+      "source_path": "/home/thelya/Work/Sop-cfstdata/output/tmp/A1-4/A1-4.json",
+      "destination_path": "/home/thelya/Work/Sop-cfstdata/output/output/A1-4.json",
       "overwritten": false,
       "published": true,
       "message": "published"

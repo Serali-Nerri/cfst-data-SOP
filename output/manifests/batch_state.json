@@ -1,6 +1,6 @@
 {
   "schema_version": "cfst-batch-state-v1",
-  "generated_at": "2026-05-02T11:06:30.268305+00:00",
+  "generated_at": "2026-05-02T11:53:07.892279+00:00",
   "paper_count": 4,
   "papers": [
     {
@@ -13,27 +13,27 @@
     },
     {
       "paper_id": "A1-2",
-      "status": "unprepared_package",
+      "status": "published",
       "retry_count": 0,
-      "validated": false,
-      "published": false,
+      "validated": true,
+      "published": true,
       "last_error": null
     },
     {
       "paper_id": "A1-4",
-      "status": "unprepared_package",
+      "status": "published",
       "retry_count": 0,
-      "validated": false,
-      "published": false,
+      "validated": true,
+      "published": true,
       "last_error": null
     },
     {
       "paper_id": "A1-5",
-      "status": "unprepared_package",
-      "retry_count": 0,
+      "status": "failed",
+      "retry_count": 1,
       "validated": false,
       "published": false,
-      "last_error": null
+      "last_error": "user requested to stop A1-5 after platform-level worker errors before extraction result"
     }
   ]
 }
