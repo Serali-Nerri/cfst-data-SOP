@@ -1,10 +1,82 @@
 {
   "schema_version": "cfst-batch-state-v1",
-  "generated_at": "2026-05-01T06:05:06Z",
-  "paper_count": 1,
+  "generated_at": "2026-05-02T04:47:56.636377+00:00",
+  "paper_count": 10,
   "papers": [
     {
+      "paper_id": "A1-1",
+      "status": "published",
+      "retry_count": 0,
+      "validated": true,
+      "published": true,
+      "last_error": null
+    },
+    {
+      "paper_id": "A1-2",
+      "status": "published",
+      "retry_count": 0,
+      "validated": true,
+      "published": true,
+      "last_error": null
+    },
+    {
+      "paper_id": "A1-3",
+      "status": "published",
+      "retry_count": 0,
+      "validated": true,
+      "published": true,
+      "last_error": null
+    },
+    {
+      "paper_id": "A1-4",
+      "status": "published",
+      "retry_count": 0,
+      "validated": true,
+      "published": true,
+      "last_error": null
+    },
+    {
       "paper_id": "A1-5",
+      "status": "published",
+      "retry_count": 0,
+      "validated": true,
+      "published": true,
+      "last_error": null
+    },
+    {
+      "paper_id": "A1-6",
+      "status": "published",
+      "retry_count": 1,
+      "validated": true,
+      "published": true,
+      "last_error": null
+    },
+    {
+      "paper_id": "A1-7",
+      "status": "published",
+      "retry_count": 0,
+      "validated": true,
+      "published": true,
+      "last_error": null
+    },
+    {
+      "paper_id": "A1-8",
+      "status": "published",
+      "retry_count": 1,
+      "validated": true,
+      "published": true,
+      "last_error": null
+    },
+    {
+      "paper_id": "A1-9",
+      "status": "published",
+      "retry_count": 1,
+      "validated": true,
+      "published": true,
+      "last_error": null
+    },
+    {
+      "paper_id": "A1-10",
       "status": "published",
       "retry_count": 0,
       "validated": true,

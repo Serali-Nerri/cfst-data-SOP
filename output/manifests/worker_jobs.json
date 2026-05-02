@@ -1,9 +1,81 @@
 [
   {
+    "paper_id": "A1-1",
+    "paper_pdf_relpath": "processed/[A1-1].pdf",
+    "worker_output_json_path": "/home/thelya/Work/Sop-cfstdata/output/tmp/A1-1/A1-1.json",
+    "final_output_json_path": "/home/thelya/Work/Sop-cfstdata/output/output/A1-1.json",
+    "expected_specimen_count": null,
+    "status": "prepared"
+  },
+  {
+    "paper_id": "A1-2",
+    "paper_pdf_relpath": "processed/[A1-2].pdf",
+    "worker_output_json_path": "/home/thelya/Work/Sop-cfstdata/output/tmp/A1-2/A1-2.json",
+    "final_output_json_path": "/home/thelya/Work/Sop-cfstdata/output/output/A1-2.json",
+    "expected_specimen_count": null,
+    "status": "prepared"
+  },
+  {
+    "paper_id": "A1-3",
+    "paper_pdf_relpath": "processed/[A1-3].pdf",
+    "worker_output_json_path": "/home/thelya/Work/Sop-cfstdata/output/tmp/A1-3/A1-3.json",
+    "final_output_json_path": "/home/thelya/Work/Sop-cfstdata/output/output/A1-3.json",
+    "expected_specimen_count": null,
+    "status": "prepared"
+  },
+  {
+    "paper_id": "A1-4",
+    "paper_pdf_relpath": "processed/[A1-4].pdf",
+    "worker_output_json_path": "/home/thelya/Work/Sop-cfstdata/output/tmp/A1-4/A1-4.json",
+    "final_output_json_path": "/home/thelya/Work/Sop-cfstdata/output/output/A1-4.json",
+    "expected_specimen_count": null,
+    "status": "prepared"
+  },
+  {
     "paper_id": "A1-5",
-    "paper_pdf_relpath": "rawdata/[A1-5]",
+    "paper_pdf_relpath": "processed/[A1-5].pdf",
     "worker_output_json_path": "/home/thelya/Work/Sop-cfstdata/output/tmp/A1-5/A1-5.json",
     "final_output_json_path": "/home/thelya/Work/Sop-cfstdata/output/output/A1-5.json",
+    "expected_specimen_count": null,
+    "status": "prepared"
+  },
+  {
+    "paper_id": "A1-6",
+    "paper_pdf_relpath": "processed/[A1-6].pdf",
+    "worker_output_json_path": "/home/thelya/Work/Sop-cfstdata/output/tmp/A1-6/A1-6.json",
+    "final_output_json_path": "/home/thelya/Work/Sop-cfstdata/output/output/A1-6.json",
+    "expected_specimen_count": null,
+    "status": "prepared"
+  },
+  {
+    "paper_id": "A1-7",
+    "paper_pdf_relpath": "processed/[A1-7].pdf",
+    "worker_output_json_path": "/home/thelya/Work/Sop-cfstdata/output/tmp/A1-7/A1-7.json",
+    "final_output_json_path": "/home/thelya/Work/Sop-cfstdata/output/output/A1-7.json",
+    "expected_specimen_count": null,
+    "status": "prepared"
+  },
+  {
+    "paper_id": "A1-8",
+    "paper_pdf_relpath": "processed/[A1-8].pdf",
+    "worker_output_json_path": "/home/thelya/Work/Sop-cfstdata/output/tmp/A1-8/A1-8.json",
+    "final_output_json_path": "/home/thelya/Work/Sop-cfstdata/output/output/A1-8.json",
+    "expected_specimen_count": null,
+    "status": "prepared"
+  },
+  {
+    "paper_id": "A1-9",
+    "paper_pdf_relpath": "processed/[A1-9].pdf",
+    "worker_output_json_path": "/home/thelya/Work/Sop-cfstdata/output/tmp/A1-9/A1-9.json",
+    "final_output_json_path": "/home/thelya/Work/Sop-cfstdata/output/output/A1-9.json",
+    "expected_specimen_count": null,
+    "status": "prepared"
+  },
+  {
+    "paper_id": "A1-10",
+    "paper_pdf_relpath": "processed/[A1-10].pdf",
+    "worker_output_json_path": "/home/thelya/Work/Sop-cfstdata/output/tmp/A1-10/A1-10.json",
+    "final_output_json_path": "/home/thelya/Work/Sop-cfstdata/output/output/A1-10.json",
     "expected_specimen_count": null,
     "status": "prepared"
   }

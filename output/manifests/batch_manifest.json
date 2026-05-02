@@ -1,8 +1,8 @@
 {
   "schema_version": "cfst-batch-manifest-v3",
-  "generated_at": "2026-05-01T06:05:06Z",
-  "source_layout": "rawdata-bundle",
-  "processed_root": "/home/thelya/Work/Sop-cfstdata/rawdata",
+  "generated_at": "2026-05-02T04:47:56.632116+00:00",
+  "source_layout": "processed-pdf",
+  "processed_root": "/home/thelya/Work/Sop-cfstdata/processed",
   "worktree_root": "/home/thelya/Work/Sop-cfstdata",
   "output_root": "/home/thelya/Work/Sop-cfstdata/output",
   "git_status": {
@@ -10,20 +10,155 @@
     "stdout": "true",
     "stderr": ""
   },
-  "paper_count": 1,
+  "paper_count": 10,
   "papers": [
     {
-      "paper_id": "A1-5",
-      "citation_tag": "[A1-5]",
-      "paper_title_hint": "钢管高强混凝土轴压力学性能的理论分析与试验研究",
+      "paper_id": "A1-1",
+      "citation_tag": "[A1-1]",
+      "paper_title_hint": "",
       "expected_specimen_count": null,
-      "processed_pdf": "rawdata/[A1-5]/e443a82f-34d5-4846-a440-813ecdb7c24b_origin.pdf",
-      "paper_pdf_relpath": "rawdata/[A1-5]",
+      "processed_pdf": "/home/thelya/Work/Sop-cfstdata/processed/[A1-1].pdf",
+      "paper_pdf_relpath": "processed/[A1-1].pdf",
       "status": "prepared",
       "layout": {
         "ready": true,
-        "pdf_file": "e443a82f-34d5-4846-a440-813ecdb7c24b_origin.pdf",
+        "pdf_file": "[A1-1].pdf",
+        "total_pages": 9,
+        "issues": []
+      }
+    },
+    {
+      "paper_id": "A1-2",
+      "citation_tag": "[A1-2]",
+      "paper_title_hint": "",
+      "expected_specimen_count": null,
+      "processed_pdf": "/home/thelya/Work/Sop-cfstdata/processed/[A1-2].pdf",
+      "paper_pdf_relpath": "processed/[A1-2].pdf",
+      "status": "prepared",
+      "layout": {
+        "ready": true,
+        "pdf_file": "[A1-2].pdf",
+        "total_pages": 14,
+        "issues": []
+      }
+    },
+    {
+      "paper_id": "A1-3",
+      "citation_tag": "[A1-3]",
+      "paper_title_hint": "",
+      "expected_specimen_count": null,
+      "processed_pdf": "/home/thelya/Work/Sop-cfstdata/processed/[A1-3].pdf",
+      "paper_pdf_relpath": "processed/[A1-3].pdf",
+      "status": "prepared",
+      "layout": {
+        "ready": true,
+        "pdf_file": "[A1-3].pdf",
+        "total_pages": 9,
+        "issues": []
+      }
+    },
+    {
+      "paper_id": "A1-4",
+      "citation_tag": "[A1-4]",
+      "paper_title_hint": "",
+      "expected_specimen_count": null,
+      "processed_pdf": "/home/thelya/Work/Sop-cfstdata/processed/[A1-4].pdf",
+      "paper_pdf_relpath": "processed/[A1-4].pdf",
+      "status": "prepared",
+      "layout": {
+        "ready": true,
+        "pdf_file": "[A1-4].pdf",
+        "total_pages": 4,
+        "issues": []
+      }
+    },
+    {
+      "paper_id": "A1-5",
+      "citation_tag": "[A1-5]",
+      "paper_title_hint": "",
+      "expected_specimen_count": null,
+      "processed_pdf": "/home/thelya/Work/Sop-cfstdata/processed/[A1-5].pdf",
+      "paper_pdf_relpath": "processed/[A1-5].pdf",
+      "status": "prepared",
+      "layout": {
+        "ready": true,
+        "pdf_file": "[A1-5].pdf",
         "total_pages": 6,
+        "issues": []
+      }
+    },
+    {
+      "paper_id": "A1-6",
+      "citation_tag": "[A1-6]",
+      "paper_title_hint": "",
+      "expected_specimen_count": null,
+      "processed_pdf": "/home/thelya/Work/Sop-cfstdata/processed/[A1-6].pdf",
+      "paper_pdf_relpath": "processed/[A1-6].pdf",
+      "status": "prepared",
+      "layout": {
+        "ready": true,
+        "pdf_file": "[A1-6].pdf",
+        "total_pages": 14,
+        "issues": []
+      }
+    },
+    {
+      "paper_id": "A1-7",
+      "citation_tag": "[A1-7]",
+      "paper_title_hint": "",
+      "expected_specimen_count": null,
+      "processed_pdf": "/home/thelya/Work/Sop-cfstdata/processed/[A1-7].pdf",
+      "paper_pdf_relpath": "processed/[A1-7].pdf",
+      "status": "prepared",
+      "layout": {
+        "ready": true,
+        "pdf_file": "[A1-7].pdf",
+        "total_pages": 9,
+        "issues": []
+      }
+    },
+    {
+      "paper_id": "A1-8",
+      "citation_tag": "[A1-8]",
+      "paper_title_hint": "",
+      "expected_specimen_count": null,
+      "processed_pdf": "/home/thelya/Work/Sop-cfstdata/processed/[A1-8].pdf",
+      "paper_pdf_relpath": "processed/[A1-8].pdf",
+      "status": "prepared",
+      "layout": {
+        "ready": true,
+        "pdf_file": "[A1-8].pdf",
+        "total_pages": 4,
+        "issues": []
+      }
+    },
+    {
+      "paper_id": "A1-9",
+      "citation_tag": "[A1-9]",
+      "paper_title_hint": "",
+      "expected_specimen_count": null,
+      "processed_pdf": "/home/thelya/Work/Sop-cfstdata/processed/[A1-9].pdf",
+      "paper_pdf_relpath": "processed/[A1-9].pdf",
+      "status": "prepared",
+      "layout": {
+        "ready": true,
+        "pdf_file": "[A1-9].pdf",
+        "total_pages": 5,
+        "issues": []
+      }
+    },
+    {
+      "paper_id": "A1-10",
+      "citation_tag": "[A1-10]",
+      "paper_title_hint": "",
+      "expected_specimen_count": null,
+      "processed_pdf": "/home/thelya/Work/Sop-cfstdata/processed/[A1-10].pdf",
+      "paper_pdf_relpath": "processed/[A1-10].pdf",
+      "status": "prepared",
+      "layout": {
+        "ready": true,
+        "pdf_file": "[A1-10].pdf",
+        "total_pages": 15,
         "issues": []
       }
     }

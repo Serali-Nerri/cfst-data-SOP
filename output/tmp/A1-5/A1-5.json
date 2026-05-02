@@ -1,12 +1,12 @@
 {
-  "schema_version": "1.0.0",
+  "schema_version": "2.0.0-draft",
   "paper": {
     "ref_info": {
-      "title": "钢管高强混凝土轴压力学性能的理论分析与试验研究",
+      "title": "THEORETICAL ANALYSES AND EXPERIMENTAL RESEARCHES FOR THE BEHAVIORS OF HIGH STRENGTH CONCRETE FILLED STEEL TUBES SUBJECTED TO AXIAL COMPRESSION",
       "authors": [
-        "韩林海"
+        "Han Linhai"
       ],
-      "journal": "工业建筑 / Industrial Construction",
+      "journal": "Industrial Construction",
       "year": 1997,
       "doi": "10.13204/j.gyjz1997.11.010",
       "language": "zh"
@@ -15,1511 +15,295 @@
       "is_valid": true,
       "reason": null
     },
-    "paper_evidence": {
-      "source_locations": [
-        {
-          "page": 1,
-          "table": null,
-          "figure": null,
-          "section": "Title and abstract",
-          "quote": "钢管高强混凝土轴压力学性能的理论分析与试验研究; 韩林海; HSCFST subjected to axial compression."
-        },
-        {
-          "page": 3,
-          "table": null,
-          "figure": null,
-          "section": "3 钢管高强混凝土轴压试验",
-          "quote": "9种不同套箍指标ξ，共计22个钢管高强混凝土标准试件的荷载－变形全过程关系曲线的试验研究。"
-        },
-        {
-          "page": 4,
-          "table": "表1",
-          "figure": null,
-          "section": "3.1 试验概况",
-          "quote": "表1 钢管高强混凝土的试件参数; columns include 试件号, D×t×L, fy, fck, ξ."
-        },
-        {
-          "page": 5,
-          "table": "表2",
-          "figure": null,
-          "section": "4 轴压强度承载力的简化计算",
-          "quote": "表2 轴压强度承载力计算和实测值比较; 本文 rows report measured capacity; footnote: Nue为实测承载力的平均值."
-        }
-      ],
-      "field_evidence": {},
-      "description": "The retained rows are the 22 labeled HSC specimens from the current paper. Literature comparison rows in Table 2 were not converted into specimen rows because this paper does not give their specimen labels."
-    },
-    "paper_shared_defaults": {
-      "data": {
-        "fco_mpa": 53.4,
-        "fc_type": "prism",
-        "recycled_aggregate_ratio_percent": 0.0,
-        "eccentricity": {
-          "e1_mm": 0.0,
-          "e2_mm": 0.0
-        },
-        "material": {
-          "steel": {
-            "type": "carbon_steel",
-            "note": "Steel tubes; fy was measured by standard tensile tests."
-          },
-          "concrete": {
-            "type": "normal",
-            "note": "High-strength normal concrete; cube strength fcu=76.8 MPa converted to fck=53.4 MPa."
-          }
-        },
-        "loading_mode": {
-          "type": "monotonic",
-          "description": "Axial compression loading on a 500 t hydraulic compression machine."
-        },
-        "condition": {
-          "tags": [
-            "normal"
-          ],
-          "description": "Undamaged standard CFST specimens tested under axial compression."
-        }
+    "data_sources": [
+      {
+        "source_id": "S1",
+        "type": "section",
+        "name": "Section 3.1",
+        "description": "Experimental overview, concrete mix, concrete strength conversion, specimen fabrication, axial compression setup, and loading procedure."
       },
-      "evidence": {
-        "source_locations": [
-          {
-            "page": 3,
-            "table": null,
-            "figure": null,
-            "section": "3.1 试验概况",
-            "quote": "试件采用了7种不同屈服强度的钢管，屈服强度fy=309.5～482.5MPa，通过标准试件的拉伸试验测得。"
-          },
-          {
-            "page": 3,
-            "table": null,
-            "figure": null,
-            "section": "3.1 试验概况",
-            "quote": "高强混凝土的立方试块的抗压强度fcu=76.8MPa，换算为标准抗压强度fck=53.4MPa。"
-          },
-          {
-            "page": 3,
-            "table": null,
-            "figure": null,
-            "section": "3 钢管高强混凝土轴压试验",
-            "quote": "钢管高强混凝土标准试件的荷载－变形全过程关系曲线的试验研究。"
-          },
-          {
-            "page": 4,
-            "table": null,
-            "figure": null,
-            "section": "3.1 试验概况",
-            "quote": "试验在哈尔滨建筑大学结构－力学实验中心进行，采用500t液压压力试验机。"
-          }
-        ],
-        "field_evidence": {
-          "fco_mpa": {
-            "source_locations": [
-              {
-                "page": 3,
-                "table": null,
-                "figure": null,
-                "section": "3.1 试验概况",
-                "quote": "高强混凝土的立方试块的抗压强度fcu=76.8MPa，换算为标准抗压强度fck=53.4MPa。"
-              },
-              {
-                "page": 4,
-                "table": "表1",
-                "figure": null,
-                "section": "Specimen parameters",
-                "quote": "表1 lists fck = 53.4 MPa for the HSC specimen groups."
-              }
-            ],
-            "basis": "directly reported converted concrete strength",
-            "derivation": "Stored fco_mpa is the fck value paired with all current-paper specimen rows.",
-            "raw_value": "fck = 53.4 MPa",
-            "normalized_value": 53.4
-          },
-          "fc_type": {
-            "source_locations": [
-              {
-                "page": 3,
-                "table": null,
-                "figure": null,
-                "section": "3.1 试验概况",
-                "quote": "fcu=76.8MPa，换算为标准抗压强度fck=53.4MPa。"
-              }
-            ],
-            "basis": "reported strength basis",
-            "derivation": "The stored value is the paper's converted standard compressive strength fck rather than the raw cube strength; under the Chinese concrete-strength basis rules this is treated as prismatic/axial strength.",
-            "raw_value": "cube fcu=76.8 MPa converted to fck=53.4 MPa",
-            "normalized_value": "prism"
-          },
-          "recycled_aggregate_ratio_percent": {
-            "source_locations": [
-              {
-                "page": 3,
-                "table": null,
-                "figure": null,
-                "section": "3.1 试验概况",
-                "quote": "Mix constituents include cement, water, sand, diabase crushed stone, FDN superplasticizer, and pumping agent."
-              }
-            ],
-            "basis": "not reported as recycled aggregate",
-            "derivation": "No recycled aggregate replacement is reported, so the project default is 0%.",
-            "raw_value": null,
-            "normalized_value": 0.0
-          },
-          "eccentricity": {
-            "source_locations": [
-              {
-                "page": 1,
-                "table": null,
-                "figure": null,
-                "section": "Abstract",
-                "quote": "HSCFST subjected to axial compression."
-              },
-              {
-                "page": 3,
-                "table": null,
-                "figure": null,
-                "section": "3 钢管高强混凝土轴压试验",
-                "quote": "轴压标准试件"
-              }
-            ],
-            "basis": "axial loading",
-            "derivation": "Axial compression specimens use e1_mm = e2_mm = 0.",
-            "raw_value": "轴压",
-            "normalized_value": "e1=0, e2=0"
-          },
-          "loading_mode": {
-            "source_locations": [
-              {
-                "page": 4,
-                "table": null,
-                "figure": null,
-                "section": "3.1 试验概况",
-                "quote": "采用500t液压压力试验机...每次加载稳定2～3min后再读数；当应变超过10-2后，连续缓慢加载。"
-              }
-            ],
-            "basis": "test procedure",
-            "derivation": "Incremental compression followed by continuous slow loading is normalized as monotonic loading.",
-            "raw_value": "axial compression loading",
-            "normalized_value": "monotonic"
-          },
-          "condition": {
-            "source_locations": [
-              {
-                "page": 3,
-                "table": null,
-                "figure": null,
-                "section": "3.1 试验概况",
-                "quote": "标准试件; 立方试块与试件在同条件下自然养护。"
-              }
-            ],
-            "basis": "no special pre-test or in-test deterioration reported",
-            "derivation": "No corrosion, freeze-thaw, thermal exposure, pre-damage, strengthening, or long-term condition is reported.",
-            "raw_value": "standard specimens under axial compression",
-            "normalized_value": "normal"
-          }
-        },
-        "description": "Concrete strength, material type, eccentricity, loading mode, recycled aggregate ratio, and normal condition apply to all current-paper HSC specimens."
+      {
+        "source_id": "S2",
+        "type": "table",
+        "name": "Table 1",
+        "description": "Specimen labels, circular steel tube dimensions, steel yield strength, concrete strength, and load-deformation curve features."
+      },
+      {
+        "source_id": "S3",
+        "type": "table",
+        "name": "Table 2",
+        "description": "Calculated and measured axial compressive capacities for the present-paper specimens and cited comparison data."
+      }
+    ],
+    "defaults": {
+      "fco": 53.4,
+      "fc_type": "prism",
+      "loading_mode": "monotonic",
+      "condition": "normal",
+      "material": {
+        "steel": "carbon_steel",
+        "concrete": "normal"
       }
     },
-    "notes": "Table 2 reports average measured capacity for multi-specimen current-paper groups; the same reported group average is assigned to each explicitly labeled member specimen."
+    "default_consistency": {
+      "fco": true,
+      "fc_type": true,
+      "loading_mode": true,
+      "condition": true,
+      "material": true
+    },
+    "default_notes": {
+      "fco": "Sources S1 and S2 report one concrete strength fck=53.4 MPa for all retained specimens after conversion from cube strength.",
+      "fc_type": "The stored concrete strength uses the converted standard compressive-strength basis for this Chinese paper, treated as prism.",
+      "loading_mode": "Sources S1 and S3 describe axial compression loading with measured ultimate axial capacity.",
+      "condition": "No corrosion, freeze-thaw, fire exposure, pre-damage, strengthening, or other special condition is reported for the retained specimens.",
+      "material": "Sources S1 and S2 report carbon-steel tubes filled with high-strength normal concrete."
+    },
+    "notes": "Only the present-paper test rows are retained. The cited literature comparison rows are not included because recoverable source specimen labels and member-to-row mappings are not provided. For repeated present-paper specimens, measured capacity is reported as a group average and the same n_exp is stored for each member."
   },
-  "section_groups": {
-    "square": {
-      "has_data": false,
-      "shared": {},
-      "specimens": [],
-      "group_notes": null
+  "Group_A": {
+    "shared": {},
+    "specimens": [],
+    "note": null
+  },
+  "Group_B": {
+    "shared": {},
+    "specimens": [],
+    "note": null
+  },
+  "Group_C": {
+    "shared": {
+      "r_ratio": 0,
+      "e1": 0,
+      "e2": 0
     },
-    "rectangular": {
-      "has_data": false,
-      "shared": {},
-      "specimens": [],
-      "group_notes": null
-    },
-    "circular": {
-      "has_data": true,
-      "shared": {
-        "evidence": {
-          "source_locations": [
-            {
-              "page": 4,
-              "table": "表1",
-              "figure": null,
-              "section": "Specimen parameters",
-              "quote": "The specimen parameter table gives circular-tube dimensions as D×t×L."
-            }
-          ],
-          "field_evidence": {
-            "geometry": {
-              "source_locations": [
-                {
-                  "page": 4,
-                  "table": "表1",
-                  "figure": null,
-                  "section": "Specimen parameters",
-                  "quote": "D×t×L mm"
-                }
-              ],
-              "basis": "table reported",
-              "derivation": "For circular steel tubes, b_mm = h_mm = reported outer diameter D; t_mm and l_mm are reported in D×t×L.",
-              "raw_value": "D×t×L",
-              "normalized_value": null
-            },
-            "geometry.r0_mm": {
-              "source_locations": [
-                {
-                  "page": 4,
-                  "table": "表1",
-                  "figure": null,
-                  "section": "Specimen parameters",
-                  "quote": "D×t×L mm"
-                }
-              ],
-              "basis": "formula derived",
-              "derivation": "Circular Group B section: r0_mm = h_mm / 2. Values were calculated with safe_calc.py in the sandbox.",
-              "raw_value": "D",
-              "normalized_value": "h_mm / 2"
-            }
-          },
-          "description": "All retained specimens are circular CFST columns."
-        }
+    "specimens": [
+      {
+        "specimen_label": "HSC1-1",
+        "fy": 482.5,
+        "b": 159.8,
+        "h": 159.8,
+        "t": 6.3,
+        "r0": 79.9,
+        "L": 476,
+        "n_exp": 2350
       },
-      "specimens": [
-        {
-          "specimen_id": "HSC1-1",
-          "data": {
-            "fy_mpa": 482.5,
-            "geometry": {
-              "b_mm": 159.8,
-              "h_mm": 159.8,
-              "t_mm": 6.3,
-              "r0_mm": 79.9,
-              "l_mm": 476.0
-            },
-            "n_exp_kn": 2350.0
-          },
-          "evidence": {
-            "source_locations": [
-              {
-                "page": 4,
-                "table": "表1",
-                "figure": null,
-                "section": "Specimen parameters",
-                "quote": "HSC1-1/HSC1-2/HSC1-3; D×t×L=159.8×6.3×476; fy=482.5; fck=53.4; ξ=1.62."
-              },
-              {
-                "page": 5,
-                "table": "表2",
-                "figure": null,
-                "section": "Strength comparison",
-                "quote": "3 specimens; D=159.8, t=6.3, L=476, fy=482.5, fck=53.4, ξ=1.62, measured Nue=2350 kN; source 本文."
-              }
-            ],
-            "field_evidence": {
-              "n_exp_kn": {
-                "source_locations": [
-                  {
-                    "page": 5,
-                    "table": "表2",
-                    "figure": null,
-                    "section": "Strength comparison",
-                    "quote": "For a group of multiple specimens, Nue is the average measured capacity."
-                  }
-                ],
-                "basis": "reported group average",
-                "derivation": "Table 2 reports the current-paper HSC1 group measured capacity as 2350 kN for three specimens.",
-                "raw_value": "Nue = 2350 kN",
-                "normalized_value": 2350.0
-              }
-            },
-            "description": "HSC1 group specimen with Table 2 reported average measured capacity."
-          },
-          "quality_flags": [
-            "reported_group_average",
-            "table_derived",
-            "formula_derived"
-          ],
-          "notes": "Table 2 gives a group average for HSC1-1 through HSC1-3."
-        },
-        {
-          "specimen_id": "HSC1-2",
-          "data": {
-            "fy_mpa": 482.5,
-            "geometry": {
-              "b_mm": 159.8,
-              "h_mm": 159.8,
-              "t_mm": 6.3,
-              "r0_mm": 79.9,
-              "l_mm": 476.0
-            },
-            "n_exp_kn": 2350.0
-          },
-          "evidence": {
-            "source_locations": [
-              {
-                "page": 4,
-                "table": "表1",
-                "figure": null,
-                "section": "Specimen parameters",
-                "quote": "HSC1-1/HSC1-2/HSC1-3; D×t×L=159.8×6.3×476; fy=482.5; fck=53.4; ξ=1.62."
-              },
-              {
-                "page": 5,
-                "table": "表2",
-                "figure": null,
-                "section": "Strength comparison",
-                "quote": "3 specimens; D=159.8, t=6.3, L=476, fy=482.5, fck=53.4, ξ=1.62, measured Nue=2350 kN; source 本文."
-              }
-            ],
-            "field_evidence": {
-              "n_exp_kn": {
-                "source_locations": [
-                  {
-                    "page": 5,
-                    "table": "表2",
-                    "figure": null,
-                    "section": "Strength comparison",
-                    "quote": "For a group of multiple specimens, Nue is the average measured capacity."
-                  }
-                ],
-                "basis": "reported group average",
-                "derivation": "Table 2 reports the current-paper HSC1 group measured capacity as 2350 kN for three specimens.",
-                "raw_value": "Nue = 2350 kN",
-                "normalized_value": 2350.0
-              }
-            },
-            "description": "HSC1 group specimen with Table 2 reported average measured capacity."
-          },
-          "quality_flags": [
-            "reported_group_average",
-            "table_derived",
-            "formula_derived"
-          ],
-          "notes": "Table 2 gives a group average for HSC1-1 through HSC1-3."
-        },
-        {
-          "specimen_id": "HSC1-3",
-          "data": {
-            "fy_mpa": 482.5,
-            "geometry": {
-              "b_mm": 159.8,
-              "h_mm": 159.8,
-              "t_mm": 6.3,
-              "r0_mm": 79.9,
-              "l_mm": 476.0
-            },
-            "n_exp_kn": 2350.0
-          },
-          "evidence": {
-            "source_locations": [
-              {
-                "page": 4,
-                "table": "表1",
-                "figure": null,
-                "section": "Specimen parameters",
-                "quote": "HSC1-1/HSC1-2/HSC1-3; D×t×L=159.8×6.3×476; fy=482.5; fck=53.4; ξ=1.62."
-              },
-              {
-                "page": 5,
-                "table": "表2",
-                "figure": null,
-                "section": "Strength comparison",
-                "quote": "3 specimens; D=159.8, t=6.3, L=476, fy=482.5, fck=53.4, ξ=1.62, measured Nue=2350 kN; source 本文."
-              }
-            ],
-            "field_evidence": {
-              "n_exp_kn": {
-                "source_locations": [
-                  {
-                    "page": 5,
-                    "table": "表2",
-                    "figure": null,
-                    "section": "Strength comparison",
-                    "quote": "For a group of multiple specimens, Nue is the average measured capacity."
-                  }
-                ],
-                "basis": "reported group average",
-                "derivation": "Table 2 reports the current-paper HSC1 group measured capacity as 2350 kN for three specimens.",
-                "raw_value": "Nue = 2350 kN",
-                "normalized_value": 2350.0
-              }
-            },
-            "description": "HSC1 group specimen with Table 2 reported average measured capacity."
-          },
-          "quality_flags": [
-            "reported_group_average",
-            "table_derived",
-            "formula_derived"
-          ],
-          "notes": "Table 2 gives a group average for HSC1-1 through HSC1-3."
-        },
-        {
-          "specimen_id": "HSC2-1",
-          "data": {
-            "fy_mpa": 309.5,
-            "geometry": {
-              "b_mm": 159.9,
-              "h_mm": 159.9,
-              "t_mm": 4.9,
-              "r0_mm": 79.95,
-              "l_mm": 350.0
-            },
-            "n_exp_kn": 1174.0
-          },
-          "evidence": {
-            "source_locations": [
-              {
-                "page": 4,
-                "table": "表1",
-                "figure": null,
-                "section": "Specimen parameters",
-                "quote": "HSC2-1/HSC2-2/HSC2-3/HSC2-4; D×t×L=159.9×4.9×350; fy=309.5; fck=53.4; ξ=1.12."
-              },
-              {
-                "page": 5,
-                "table": "表2",
-                "figure": null,
-                "section": "Strength comparison",
-                "quote": "4 specimens; D=159.9, t=4.9, L=350, fy=309.5, fck=53.4, ξ=1.12, measured Nue=1174 kN; source 本文."
-              }
-            ],
-            "field_evidence": {
-              "n_exp_kn": {
-                "source_locations": [
-                  {
-                    "page": 5,
-                    "table": "表2",
-                    "figure": null,
-                    "section": "Strength comparison",
-                    "quote": "For a group of multiple specimens, Nue is the average measured capacity."
-                  }
-                ],
-                "basis": "reported group average",
-                "derivation": "Table 2 reports the current-paper HSC2 group measured capacity as 1174 kN for four specimens.",
-                "raw_value": "Nue = 1174 kN",
-                "normalized_value": 1174.0
-              }
-            },
-            "description": "HSC2 group specimen with Table 2 reported average measured capacity."
-          },
-          "quality_flags": [
-            "reported_group_average",
-            "table_derived",
-            "formula_derived"
-          ],
-          "notes": "Table 2 gives a group average for HSC2-1 through HSC2-4."
-        },
-        {
-          "specimen_id": "HSC2-2",
-          "data": {
-            "fy_mpa": 309.5,
-            "geometry": {
-              "b_mm": 159.9,
-              "h_mm": 159.9,
-              "t_mm": 4.9,
-              "r0_mm": 79.95,
-              "l_mm": 350.0
-            },
-            "n_exp_kn": 1174.0
-          },
-          "evidence": {
-            "source_locations": [
-              {
-                "page": 4,
-                "table": "表1",
-                "figure": null,
-                "section": "Specimen parameters",
-                "quote": "HSC2-1/HSC2-2/HSC2-3/HSC2-4; D×t×L=159.9×4.9×350; fy=309.5; fck=53.4; ξ=1.12."
-              },
-              {
-                "page": 5,
-                "table": "表2",
-                "figure": null,
-                "section": "Strength comparison",
-                "quote": "4 specimens; D=159.9, t=4.9, L=350, fy=309.5, fck=53.4, ξ=1.12, measured Nue=1174 kN; source 本文."
-              }
-            ],
-            "field_evidence": {
-              "n_exp_kn": {
-                "source_locations": [
-                  {
-                    "page": 5,
-                    "table": "表2",
-                    "figure": null,
-                    "section": "Strength comparison",
-                    "quote": "For a group of multiple specimens, Nue is the average measured capacity."
-                  }
-                ],
-                "basis": "reported group average",
-                "derivation": "Table 2 reports the current-paper HSC2 group measured capacity as 1174 kN for four specimens.",
-                "raw_value": "Nue = 1174 kN",
-                "normalized_value": 1174.0
-              }
-            },
-            "description": "HSC2 group specimen with Table 2 reported average measured capacity."
-          },
-          "quality_flags": [
-            "reported_group_average",
-            "table_derived",
-            "formula_derived"
-          ],
-          "notes": "Table 2 gives a group average for HSC2-1 through HSC2-4."
-        },
-        {
-          "specimen_id": "HSC2-3",
-          "data": {
-            "fy_mpa": 309.5,
-            "geometry": {
-              "b_mm": 159.9,
-              "h_mm": 159.9,
-              "t_mm": 4.9,
-              "r0_mm": 79.95,
-              "l_mm": 350.0
-            },
-            "n_exp_kn": 1174.0
-          },
-          "evidence": {
-            "source_locations": [
-              {
-                "page": 4,
-                "table": "表1",
-                "figure": null,
-                "section": "Specimen parameters",
-                "quote": "HSC2-1/HSC2-2/HSC2-3/HSC2-4; D×t×L=159.9×4.9×350; fy=309.5; fck=53.4; ξ=1.12."
-              },
-              {
-                "page": 5,
-                "table": "表2",
-                "figure": null,
-                "section": "Strength comparison",
-                "quote": "4 specimens; D=159.9, t=4.9, L=350, fy=309.5, fck=53.4, ξ=1.12, measured Nue=1174 kN; source 本文."
-              }
-            ],
-            "field_evidence": {
-              "n_exp_kn": {
-                "source_locations": [
-                  {
-                    "page": 5,
-                    "table": "表2",
-                    "figure": null,
-                    "section": "Strength comparison",
-                    "quote": "For a group of multiple specimens, Nue is the average measured capacity."
-                  }
-                ],
-                "basis": "reported group average",
-                "derivation": "Table 2 reports the current-paper HSC2 group measured capacity as 1174 kN for four specimens.",
-                "raw_value": "Nue = 1174 kN",
-                "normalized_value": 1174.0
-              }
-            },
-            "description": "HSC2 group specimen with Table 2 reported average measured capacity."
-          },
-          "quality_flags": [
-            "reported_group_average",
-            "table_derived",
-            "formula_derived"
-          ],
-          "notes": "Table 2 gives a group average for HSC2-1 through HSC2-4."
-        },
-        {
-          "specimen_id": "HSC2-4",
-          "data": {
-            "fy_mpa": 309.5,
-            "geometry": {
-              "b_mm": 159.9,
-              "h_mm": 159.9,
-              "t_mm": 4.9,
-              "r0_mm": 79.95,
-              "l_mm": 350.0
-            },
-            "n_exp_kn": 1174.0
-          },
-          "evidence": {
-            "source_locations": [
-              {
-                "page": 4,
-                "table": "表1",
-                "figure": null,
-                "section": "Specimen parameters",
-                "quote": "HSC2-1/HSC2-2/HSC2-3/HSC2-4; D×t×L=159.9×4.9×350; fy=309.5; fck=53.4; ξ=1.12."
-              },
-              {
-                "page": 5,
-                "table": "表2",
-                "figure": null,
-                "section": "Strength comparison",
-                "quote": "4 specimens; D=159.9, t=4.9, L=350, fy=309.5, fck=53.4, ξ=1.12, measured Nue=1174 kN; source 本文."
-              }
-            ],
-            "field_evidence": {
-              "n_exp_kn": {
-                "source_locations": [
-                  {
-                    "page": 5,
-                    "table": "表2",
-                    "figure": null,
-                    "section": "Strength comparison",
-                    "quote": "For a group of multiple specimens, Nue is the average measured capacity."
-                  }
-                ],
-                "basis": "reported group average",
-                "derivation": "Table 2 reports the current-paper HSC2 group measured capacity as 1174 kN for four specimens.",
-                "raw_value": "Nue = 1174 kN",
-                "normalized_value": 1174.0
-              }
-            },
-            "description": "HSC2 group specimen with Table 2 reported average measured capacity."
-          },
-          "quality_flags": [
-            "reported_group_average",
-            "table_derived",
-            "formula_derived"
-          ],
-          "notes": "Table 2 gives a group average for HSC2-1 through HSC2-4."
-        },
-        {
-          "specimen_id": "HSC3-1",
-          "data": {
-            "fy_mpa": 433.0,
-            "geometry": {
-              "b_mm": 141.8,
-              "h_mm": 141.8,
-              "t_mm": 4.3,
-              "r0_mm": 70.9,
-              "l_mm": 420.0
-            },
-            "n_exp_kn": 1618.0
-          },
-          "evidence": {
-            "source_locations": [
-              {
-                "page": 4,
-                "table": "表1",
-                "figure": null,
-                "section": "Specimen parameters",
-                "quote": "HSC3-1/HSC3-2/HSC3-3; D×t×L=141.8×4.3×420; fy=433.0; fck=53.4; ξ=1.08."
-              },
-              {
-                "page": 5,
-                "table": "表2",
-                "figure": null,
-                "section": "Strength comparison",
-                "quote": "3 specimens; D=141.8, t=4.3, L=420, fy=433, fck=53.4, ξ=1.08, measured Nue=1618 kN; source 本文."
-              }
-            ],
-            "field_evidence": {
-              "n_exp_kn": {
-                "source_locations": [
-                  {
-                    "page": 5,
-                    "table": "表2",
-                    "figure": null,
-                    "section": "Strength comparison",
-                    "quote": "For a group of multiple specimens, Nue is the average measured capacity."
-                  }
-                ],
-                "basis": "reported group average",
-                "derivation": "Table 2 reports the current-paper HSC3 group measured capacity as 1618 kN for three specimens.",
-                "raw_value": "Nue = 1618 kN",
-                "normalized_value": 1618.0
-              }
-            },
-            "description": "HSC3 group specimen with Table 2 reported average measured capacity."
-          },
-          "quality_flags": [
-            "reported_group_average",
-            "table_derived",
-            "formula_derived"
-          ],
-          "notes": "Table 2 gives a group average for HSC3-1 through HSC3-3."
-        },
-        {
-          "specimen_id": "HSC3-2",
-          "data": {
-            "fy_mpa": 433.0,
-            "geometry": {
-              "b_mm": 141.8,
-              "h_mm": 141.8,
-              "t_mm": 4.3,
-              "r0_mm": 70.9,
-              "l_mm": 420.0
-            },
-            "n_exp_kn": 1618.0
-          },
-          "evidence": {
-            "source_locations": [
-              {
-                "page": 4,
-                "table": "表1",
-                "figure": null,
-                "section": "Specimen parameters",
-                "quote": "HSC3-1/HSC3-2/HSC3-3; D×t×L=141.8×4.3×420; fy=433.0; fck=53.4; ξ=1.08."
-              },
-              {
-                "page": 5,
-                "table": "表2",
-                "figure": null,
-                "section": "Strength comparison",
-                "quote": "3 specimens; D=141.8, t=4.3, L=420, fy=433, fck=53.4, ξ=1.08, measured Nue=1618 kN; source 本文."
-              }
-            ],
-            "field_evidence": {
-              "n_exp_kn": {
-                "source_locations": [
-                  {
-                    "page": 5,
-                    "table": "表2",
-                    "figure": null,
-                    "section": "Strength comparison",
-                    "quote": "For a group of multiple specimens, Nue is the average measured capacity."
-                  }
-                ],
-                "basis": "reported group average",
-                "derivation": "Table 2 reports the current-paper HSC3 group measured capacity as 1618 kN for three specimens.",
-                "raw_value": "Nue = 1618 kN",
-                "normalized_value": 1618.0
-              }
-            },
-            "description": "HSC3 group specimen with Table 2 reported average measured capacity."
-          },
-          "quality_flags": [
-            "reported_group_average",
-            "table_derived",
-            "formula_derived"
-          ],
-          "notes": "Table 2 gives a group average for HSC3-1 through HSC3-3."
-        },
-        {
-          "specimen_id": "HSC3-3",
-          "data": {
-            "fy_mpa": 433.0,
-            "geometry": {
-              "b_mm": 141.8,
-              "h_mm": 141.8,
-              "t_mm": 4.3,
-              "r0_mm": 70.9,
-              "l_mm": 420.0
-            },
-            "n_exp_kn": 1618.0
-          },
-          "evidence": {
-            "source_locations": [
-              {
-                "page": 4,
-                "table": "表1",
-                "figure": null,
-                "section": "Specimen parameters",
-                "quote": "HSC3-1/HSC3-2/HSC3-3; D×t×L=141.8×4.3×420; fy=433.0; fck=53.4; ξ=1.08."
-              },
-              {
-                "page": 5,
-                "table": "表2",
-                "figure": null,
-                "section": "Strength comparison",
-                "quote": "3 specimens; D=141.8, t=4.3, L=420, fy=433, fck=53.4, ξ=1.08, measured Nue=1618 kN; source 本文."
-              }
-            ],
-            "field_evidence": {
-              "n_exp_kn": {
-                "source_locations": [
-                  {
-                    "page": 5,
-                    "table": "表2",
-                    "figure": null,
-                    "section": "Strength comparison",
-                    "quote": "For a group of multiple specimens, Nue is the average measured capacity."
-                  }
-                ],
-                "basis": "reported group average",
-                "derivation": "Table 2 reports the current-paper HSC3 group measured capacity as 1618 kN for three specimens.",
-                "raw_value": "Nue = 1618 kN",
-                "normalized_value": 1618.0
-              }
-            },
-            "description": "HSC3 group specimen with Table 2 reported average measured capacity."
-          },
-          "quality_flags": [
-            "reported_group_average",
-            "table_derived",
-            "formula_derived"
-          ],
-          "notes": "Table 2 gives a group average for HSC3-1 through HSC3-3."
-        },
-        {
-          "specimen_id": "HSC4-1",
-          "data": {
-            "fy_mpa": 357.7,
-            "geometry": {
-              "b_mm": 114.8,
-              "h_mm": 114.8,
-              "t_mm": 3.9,
-              "r0_mm": 57.4,
-              "l_mm": 337.0
-            },
-            "n_exp_kn": 1150.0
-          },
-          "evidence": {
-            "source_locations": [
-              {
-                "page": 4,
-                "table": "表1",
-                "figure": null,
-                "section": "Specimen parameters",
-                "quote": "HSC4-1/HSC4-2/HSC4-3; D×t×L=114.8×3.9×337; fy=357.7; fck=53.4; ξ=1.01."
-              },
-              {
-                "page": 5,
-                "table": "表2",
-                "figure": null,
-                "section": "Strength comparison",
-                "quote": "3 specimens; D=114.8, t=3.9, L=337, fy=357.7, fck=53.4, ξ=1.01, measured Nue=1150 kN; source 本文."
-              }
-            ],
-            "field_evidence": {
-              "n_exp_kn": {
-                "source_locations": [
-                  {
-                    "page": 5,
-                    "table": "表2",
-                    "figure": null,
-                    "section": "Strength comparison",
-                    "quote": "For a group of multiple specimens, Nue is the average measured capacity."
-                  }
-                ],
-                "basis": "reported group average",
-                "derivation": "Table 2 reports the current-paper HSC4 group measured capacity as 1150 kN for three specimens.",
-                "raw_value": "Nue = 1150 kN",
-                "normalized_value": 1150.0
-              }
-            },
-            "description": "HSC4 group specimen with Table 2 reported average measured capacity."
-          },
-          "quality_flags": [
-            "reported_group_average",
-            "table_derived",
-            "formula_derived"
-          ],
-          "notes": "Table 2 gives a group average for HSC4-1 through HSC4-3; the text notes HSC4-1 and HSC4-2 did not capture the full descending branch after peak load."
-        },
-        {
-          "specimen_id": "HSC4-2",
-          "data": {
-            "fy_mpa": 357.7,
-            "geometry": {
-              "b_mm": 114.8,
-              "h_mm": 114.8,
-              "t_mm": 3.9,
-              "r0_mm": 57.4,
-              "l_mm": 337.0
-            },
-            "n_exp_kn": 1150.0
-          },
-          "evidence": {
-            "source_locations": [
-              {
-                "page": 4,
-                "table": "表1",
-                "figure": null,
-                "section": "Specimen parameters",
-                "quote": "HSC4-1/HSC4-2/HSC4-3; D×t×L=114.8×3.9×337; fy=357.7; fck=53.4; ξ=1.01."
-              },
-              {
-                "page": 5,
-                "table": "表2",
-                "figure": null,
-                "section": "Strength comparison",
-                "quote": "3 specimens; D=114.8, t=3.9, L=337, fy=357.7, fck=53.4, ξ=1.01, measured Nue=1150 kN; source 本文."
-              }
-            ],
-            "field_evidence": {
-              "n_exp_kn": {
-                "source_locations": [
-                  {
-                    "page": 5,
-                    "table": "表2",
-                    "figure": null,
-                    "section": "Strength comparison",
-                    "quote": "For a group of multiple specimens, Nue is the average measured capacity."
-                  }
-                ],
-                "basis": "reported group average",
-                "derivation": "Table 2 reports the current-paper HSC4 group measured capacity as 1150 kN for three specimens.",
-                "raw_value": "Nue = 1150 kN",
-                "normalized_value": 1150.0
-              }
-            },
-            "description": "HSC4 group specimen with Table 2 reported average measured capacity."
-          },
-          "quality_flags": [
-            "reported_group_average",
-            "table_derived",
-            "formula_derived"
-          ],
-          "notes": "Table 2 gives a group average for HSC4-1 through HSC4-3; the text notes HSC4-1 and HSC4-2 did not capture the full descending branch after peak load."
-        },
-        {
-          "specimen_id": "HSC4-3",
-          "data": {
-            "fy_mpa": 357.7,
-            "geometry": {
-              "b_mm": 114.8,
-              "h_mm": 114.8,
-              "t_mm": 3.9,
-              "r0_mm": 57.4,
-              "l_mm": 337.0
-            },
-            "n_exp_kn": 1150.0
-          },
-          "evidence": {
-            "source_locations": [
-              {
-                "page": 4,
-                "table": "表1",
-                "figure": null,
-                "section": "Specimen parameters",
-                "quote": "HSC4-1/HSC4-2/HSC4-3; D×t×L=114.8×3.9×337; fy=357.7; fck=53.4; ξ=1.01."
-              },
-              {
-                "page": 5,
-                "table": "表2",
-                "figure": null,
-                "section": "Strength comparison",
-                "quote": "3 specimens; D=114.8, t=3.9, L=337, fy=357.7, fck=53.4, ξ=1.01, measured Nue=1150 kN; source 本文."
-              }
-            ],
-            "field_evidence": {
-              "n_exp_kn": {
-                "source_locations": [
-                  {
-                    "page": 5,
-                    "table": "表2",
-                    "figure": null,
-                    "section": "Strength comparison",
-                    "quote": "For a group of multiple specimens, Nue is the average measured capacity."
-                  }
-                ],
-                "basis": "reported group average",
-                "derivation": "Table 2 reports the current-paper HSC4 group measured capacity as 1150 kN for three specimens.",
-                "raw_value": "Nue = 1150 kN",
-                "normalized_value": 1150.0
-              }
-            },
-            "description": "HSC4 group specimen with Table 2 reported average measured capacity."
-          },
-          "quality_flags": [
-            "reported_group_average",
-            "table_derived",
-            "formula_derived"
-          ],
-          "notes": "Table 2 gives a group average for HSC4-1 through HSC4-3."
-        },
-        {
-          "specimen_id": "HSC5-1",
-          "data": {
-            "fy_mpa": 373.3,
-            "geometry": {
-              "b_mm": 165.7,
-              "h_mm": 165.7,
-              "t_mm": 5.1,
-              "r0_mm": 82.85,
-              "l_mm": 494.0
-            },
-            "n_exp_kn": 2309.0
-          },
-          "evidence": {
-            "source_locations": [
-              {
-                "page": 4,
-                "table": "表1",
-                "figure": null,
-                "section": "Specimen parameters",
-                "quote": "HSC5-1/HSC5-2/HSC5-3; D×t×L=165.7×5.1×494; fy=373.3; fck=53.4; ξ=0.94."
-              },
-              {
-                "page": 5,
-                "table": "表2",
-                "figure": null,
-                "section": "Strength comparison",
-                "quote": "3 specimens; D=165.7, t=5.1, L=494, fy=373.3, fck=53.4, ξ=0.94, measured Nue=2309 kN; source 本文."
-              }
-            ],
-            "field_evidence": {
-              "n_exp_kn": {
-                "source_locations": [
-                  {
-                    "page": 5,
-                    "table": "表2",
-                    "figure": null,
-                    "section": "Strength comparison",
-                    "quote": "For a group of multiple specimens, Nue is the average measured capacity."
-                  }
-                ],
-                "basis": "reported group average",
-                "derivation": "Table 2 reports the current-paper HSC5 group measured capacity as 2309 kN for three specimens.",
-                "raw_value": "Nue = 2309 kN",
-                "normalized_value": 2309.0
-              }
-            },
-            "description": "HSC5 group specimen with Table 2 reported average measured capacity."
-          },
-          "quality_flags": [
-            "reported_group_average",
-            "table_derived",
-            "formula_derived"
-          ],
-          "notes": "Table 2 gives a group average for HSC5-1 through HSC5-3."
-        },
-        {
-          "specimen_id": "HSC5-2",
-          "data": {
-            "fy_mpa": 373.3,
-            "geometry": {
-              "b_mm": 165.7,
-              "h_mm": 165.7,
-              "t_mm": 5.1,
-              "r0_mm": 82.85,
-              "l_mm": 494.0
-            },
-            "n_exp_kn": 2309.0
-          },
-          "evidence": {
-            "source_locations": [
-              {
-                "page": 4,
-                "table": "表1",
-                "figure": null,
-                "section": "Specimen parameters",
-                "quote": "HSC5-1/HSC5-2/HSC5-3; D×t×L=165.7×5.1×494; fy=373.3; fck=53.4; ξ=0.94."
-              },
-              {
-                "page": 5,
-                "table": "表2",
-                "figure": null,
-                "section": "Strength comparison",
-                "quote": "3 specimens; D=165.7, t=5.1, L=494, fy=373.3, fck=53.4, ξ=0.94, measured Nue=2309 kN; source 本文."
-              }
-            ],
-            "field_evidence": {
-              "n_exp_kn": {
-                "source_locations": [
-                  {
-                    "page": 5,
-                    "table": "表2",
-                    "figure": null,
-                    "section": "Strength comparison",
-                    "quote": "For a group of multiple specimens, Nue is the average measured capacity."
-                  }
-                ],
-                "basis": "reported group average",
-                "derivation": "Table 2 reports the current-paper HSC5 group measured capacity as 2309 kN for three specimens.",
-                "raw_value": "Nue = 2309 kN",
-                "normalized_value": 2309.0
-              }
-            },
-            "description": "HSC5 group specimen with Table 2 reported average measured capacity."
-          },
-          "quality_flags": [
-            "reported_group_average",
-            "table_derived",
-            "formula_derived"
-          ],
-          "notes": "Table 2 gives a group average for HSC5-1 through HSC5-3."
-        },
-        {
-          "specimen_id": "HSC5-3",
-          "data": {
-            "fy_mpa": 373.3,
-            "geometry": {
-              "b_mm": 165.7,
-              "h_mm": 165.7,
-              "t_mm": 5.1,
-              "r0_mm": 82.85,
-              "l_mm": 494.0
-            },
-            "n_exp_kn": 2309.0
-          },
-          "evidence": {
-            "source_locations": [
-              {
-                "page": 4,
-                "table": "表1",
-                "figure": null,
-                "section": "Specimen parameters",
-                "quote": "HSC5-1/HSC5-2/HSC5-3; D×t×L=165.7×5.1×494; fy=373.3; fck=53.4; ξ=0.94."
-              },
-              {
-                "page": 5,
-                "table": "表2",
-                "figure": null,
-                "section": "Strength comparison",
-                "quote": "3 specimens; D=165.7, t=5.1, L=494, fy=373.3, fck=53.4, ξ=0.94, measured Nue=2309 kN; source 本文."
-              }
-            ],
-            "field_evidence": {
-              "n_exp_kn": {
-                "source_locations": [
-                  {
-                    "page": 5,
-                    "table": "表2",
-                    "figure": null,
-                    "section": "Strength comparison",
-                    "quote": "For a group of multiple specimens, Nue is the average measured capacity."
-                  }
-                ],
-                "basis": "reported group average",
-                "derivation": "Table 2 reports the current-paper HSC5 group measured capacity as 2309 kN for three specimens.",
-                "raw_value": "Nue = 2309 kN",
-                "normalized_value": 2309.0
-              }
-            },
-            "description": "HSC5 group specimen with Table 2 reported average measured capacity."
-          },
-          "quality_flags": [
-            "reported_group_average",
-            "table_derived",
-            "formula_derived"
-          ],
-          "notes": "Table 2 gives a group average for HSC5-1 through HSC5-3."
-        },
-        {
-          "specimen_id": "HSC6-1",
-          "data": {
-            "fy_mpa": 324.3,
-            "geometry": {
-              "b_mm": 133.1,
-              "h_mm": 133.1,
-              "t_mm": 4.5,
-              "r0_mm": 66.55,
-              "l_mm": 397.0
-            },
-            "n_exp_kn": 1535.0
-          },
-          "evidence": {
-            "source_locations": [
-              {
-                "page": 4,
-                "table": "表1",
-                "figure": null,
-                "section": "Specimen parameters",
-                "quote": "HSC6-1; D×t×L=133.1×4.5×397; fy=324.3; fck=53.4; ξ=0.91."
-              },
-              {
-                "page": 5,
-                "table": "表2",
-                "figure": null,
-                "section": "Strength comparison",
-                "quote": "1 specimen; D=133.1, t=4.5, L=397, fy=324.3, fck=53.4, ξ=0.91, measured Nue=1535 kN; source 本文."
-              }
-            ],
-            "field_evidence": {
-              "n_exp_kn": {
-                "source_locations": [
-                  {
-                    "page": 5,
-                    "table": "表2",
-                    "figure": null,
-                    "section": "Strength comparison",
-                    "quote": "HSC6 current-paper row reports measured Nue = 1535 kN."
-                  }
-                ],
-                "basis": "directly reported",
-                "derivation": "Single-specimen current-paper row.",
-                "raw_value": "Nue = 1535 kN",
-                "normalized_value": 1535.0
-              }
-            },
-            "description": "Single HSC6 specimen."
-          },
-          "quality_flags": [
-            "table_derived",
-            "formula_derived"
-          ],
-          "notes": null
-        },
-        {
-          "specimen_id": "HSC7-1",
-          "data": {
-            "fy_mpa": 354.6,
-            "geometry": {
-              "b_mm": 113.6,
-              "h_mm": 113.6,
-              "t_mm": 3.2,
-              "r0_mm": 56.8,
-              "l_mm": 337.0
-            },
-            "n_exp_kn": 1145.0
-          },
-          "evidence": {
-            "source_locations": [
-              {
-                "page": 4,
-                "table": "表1",
-                "figure": null,
-                "section": "Specimen parameters",
-                "quote": "HSC7-1/HSC7-2/HSC7-3; D×t×L=113.6×3.2×337; fy=354.6; fck=53.4; ξ=0.82."
-              },
-              {
-                "page": 5,
-                "table": "表2",
-                "figure": null,
-                "section": "Strength comparison",
-                "quote": "3 specimens; D=113.6, t=3.2, L=337, fy=354.6, fck=53.4, ξ=0.82, measured Nue=1145 kN; source 本文."
-              }
-            ],
-            "field_evidence": {
-              "n_exp_kn": {
-                "source_locations": [
-                  {
-                    "page": 5,
-                    "table": "表2",
-                    "figure": null,
-                    "section": "Strength comparison",
-                    "quote": "For a group of multiple specimens, Nue is the average measured capacity."
-                  }
-                ],
-                "basis": "reported group average",
-                "derivation": "Table 2 reports the current-paper HSC7 group measured capacity as 1145 kN for three specimens.",
-                "raw_value": "Nue = 1145 kN",
-                "normalized_value": 1145.0
-              }
-            },
-            "description": "HSC7 group specimen with Table 2 reported average measured capacity."
-          },
-          "quality_flags": [
-            "reported_group_average",
-            "table_derived",
-            "formula_derived"
-          ],
-          "notes": "Table 2 gives a group average for HSC7-1 through HSC7-3."
-        },
-        {
-          "specimen_id": "HSC7-2",
-          "data": {
-            "fy_mpa": 354.6,
-            "geometry": {
-              "b_mm": 113.6,
-              "h_mm": 113.6,
-              "t_mm": 3.2,
-              "r0_mm": 56.8,
-              "l_mm": 337.0
-            },
-            "n_exp_kn": 1145.0
-          },
-          "evidence": {
-            "source_locations": [
-              {
-                "page": 4,
-                "table": "表1",
-                "figure": null,
-                "section": "Specimen parameters",
-                "quote": "HSC7-1/HSC7-2/HSC7-3; D×t×L=113.6×3.2×337; fy=354.6; fck=53.4; ξ=0.82."
-              },
-              {
-                "page": 5,
-                "table": "表2",
-                "figure": null,
-                "section": "Strength comparison",
-                "quote": "3 specimens; D=113.6, t=3.2, L=337, fy=354.6, fck=53.4, ξ=0.82, measured Nue=1145 kN; source 本文."
-              }
-            ],
-            "field_evidence": {
-              "n_exp_kn": {
-                "source_locations": [
-                  {
-                    "page": 5,
-                    "table": "表2",
-                    "figure": null,
-                    "section": "Strength comparison",
-                    "quote": "For a group of multiple specimens, Nue is the average measured capacity."
-                  }
-                ],
-                "basis": "reported group average",
-                "derivation": "Table 2 reports the current-paper HSC7 group measured capacity as 1145 kN for three specimens.",
-                "raw_value": "Nue = 1145 kN",
-                "normalized_value": 1145.0
-              }
-            },
-            "description": "HSC7 group specimen with Table 2 reported average measured capacity."
-          },
-          "quality_flags": [
-            "reported_group_average",
-            "table_derived",
-            "formula_derived"
-          ],
-          "notes": "Table 2 gives a group average for HSC7-1 through HSC7-3."
-        },
-        {
-          "specimen_id": "HSC7-3",
-          "data": {
-            "fy_mpa": 354.6,
-            "geometry": {
-              "b_mm": 113.6,
-              "h_mm": 113.6,
-              "t_mm": 3.2,
-              "r0_mm": 56.8,
-              "l_mm": 337.0
-            },
-            "n_exp_kn": 1145.0
-          },
-          "evidence": {
-            "source_locations": [
-              {
-                "page": 4,
-                "table": "表1",
-                "figure": null,
-                "section": "Specimen parameters",
-                "quote": "HSC7-1/HSC7-2/HSC7-3; D×t×L=113.6×3.2×337; fy=354.6; fck=53.4; ξ=0.82."
-              },
-              {
-                "page": 5,
-                "table": "表2",
-                "figure": null,
-                "section": "Strength comparison",
-                "quote": "3 specimens; D=113.6, t=3.2, L=337, fy=354.6, fck=53.4, ξ=0.82, measured Nue=1145 kN; source 本文."
-              }
-            ],
-            "field_evidence": {
-              "n_exp_kn": {
-                "source_locations": [
-                  {
-                    "page": 5,
-                    "table": "表2",
-                    "figure": null,
-                    "section": "Strength comparison",
-                    "quote": "For a group of multiple specimens, Nue is the average measured capacity."
-                  }
-                ],
-                "basis": "reported group average",
-                "derivation": "Table 2 reports the current-paper HSC7 group measured capacity as 1145 kN for three specimens.",
-                "raw_value": "Nue = 1145 kN",
-                "normalized_value": 1145.0
-              }
-            },
-            "description": "HSC7 group specimen with Table 2 reported average measured capacity."
-          },
-          "quality_flags": [
-            "reported_group_average",
-            "table_derived",
-            "formula_derived"
-          ],
-          "notes": "Table 2 gives a group average for HSC7-1 through HSC7-3."
-        },
-        {
-          "specimen_id": "HSC8-1",
-          "data": {
-            "fy_mpa": 354.6,
-            "geometry": {
-              "b_mm": 111.3,
-              "h_mm": 111.3,
-              "t_mm": 2.0,
-              "r0_mm": 55.65,
-              "l_mm": 339.0
-            },
-            "n_exp_kn": 894.0
-          },
-          "evidence": {
-            "source_locations": [
-              {
-                "page": 4,
-                "table": "表1",
-                "figure": null,
-                "section": "Specimen parameters",
-                "quote": "HSC8-1; D×t×L=111.3×2.0×339; fy=354.6; fck=53.4; ξ=0.50."
-              },
-              {
-                "page": 5,
-                "table": "表2",
-                "figure": null,
-                "section": "Strength comparison",
-                "quote": "1 specimen; D=111.3, t=2.0, L=339, fy=354.6, fck=53.4, ξ=0.50, measured Nue=894 kN; source 本文."
-              }
-            ],
-            "field_evidence": {
-              "n_exp_kn": {
-                "source_locations": [
-                  {
-                    "page": 5,
-                    "table": "表2",
-                    "figure": null,
-                    "section": "Strength comparison",
-                    "quote": "HSC8 current-paper row reports measured Nue = 894 kN."
-                  }
-                ],
-                "basis": "directly reported",
-                "derivation": "Single-specimen current-paper row.",
-                "raw_value": "Nue = 894 kN",
-                "normalized_value": 894.0
-              }
-            },
-            "description": "Single HSC8 specimen."
-          },
-          "quality_flags": [
-            "table_derived",
-            "formula_derived"
-          ],
-          "notes": null
-        },
-        {
-          "specimen_id": "HSC9-1",
-          "data": {
-            "fy_mpa": 324.3,
-            "geometry": {
-              "b_mm": 130.6,
-              "h_mm": 130.6,
-              "t_mm": 2.3,
-              "r0_mm": 65.3,
-              "l_mm": 396.0
-            },
-            "n_exp_kn": 1250.0
-          },
-          "evidence": {
-            "source_locations": [
-              {
-                "page": 4,
-                "table": "表1",
-                "figure": null,
-                "section": "Specimen parameters",
-                "quote": "HSC9-1; D×t×L=130.6×2.3×396; fy=324.3; fck=53.4; ξ=0.45."
-              },
-              {
-                "page": 5,
-                "table": "表2",
-                "figure": null,
-                "section": "Strength comparison",
-                "quote": "1 specimen; D=130.6, t=2.3, L=396, fy=324.3, fck=53.4, ξ=0.45, measured Nue=1250 kN; source 本文."
-              }
-            ],
-            "field_evidence": {
-              "n_exp_kn": {
-                "source_locations": [
-                  {
-                    "page": 5,
-                    "table": "表2",
-                    "figure": null,
-                    "section": "Strength comparison",
-                    "quote": "HSC9 current-paper row reports measured Nue = 1250 kN."
-                  }
-                ],
-                "basis": "directly reported",
-                "derivation": "Single-specimen current-paper row.",
-                "raw_value": "Nue = 1250 kN",
-                "normalized_value": 1250.0
-              }
-            },
-            "description": "Single HSC9 specimen."
-          },
-          "quality_flags": [
-            "table_derived",
-            "formula_derived"
-          ],
-          "notes": "The text identifies HSC9-1 as the minimum measured ductility-ratio case."
-        }
-      ],
-      "group_notes": "Circular steel tube specimens reported by D×t×L in Table 1; r0 values are D/2 by Group B geometry."
-    },
-    "round_ended": {
-      "has_data": false,
-      "shared": {},
-      "specimens": [],
-      "group_notes": null
-    }
+      {
+        "specimen_label": "HSC1-2",
+        "fy": 482.5,
+        "b": 159.8,
+        "h": 159.8,
+        "t": 6.3,
+        "r0": 79.9,
+        "L": 476,
+        "n_exp": 2350
+      },
+      {
+        "specimen_label": "HSC1-3",
+        "fy": 482.5,
+        "b": 159.8,
+        "h": 159.8,
+        "t": 6.3,
+        "r0": 79.9,
+        "L": 476,
+        "n_exp": 2350
+      },
+      {
+        "specimen_label": "HSC2-1",
+        "fy": 309.5,
+        "b": 115.9,
+        "h": 115.9,
+        "t": 4.9,
+        "r0": 57.95,
+        "L": 350,
+        "n_exp": 1174
+      },
+      {
+        "specimen_label": "HSC2-2",
+        "fy": 309.5,
+        "b": 115.9,
+        "h": 115.9,
+        "t": 4.9,
+        "r0": 57.95,
+        "L": 350,
+        "n_exp": 1174
+      },
+      {
+        "specimen_label": "HSC2-3",
+        "fy": 309.5,
+        "b": 115.9,
+        "h": 115.9,
+        "t": 4.9,
+        "r0": 57.95,
+        "L": 350,
+        "n_exp": 1174
+      },
+      {
+        "specimen_label": "HSC2-4",
+        "fy": 309.5,
+        "b": 115.9,
+        "h": 115.9,
+        "t": 4.9,
+        "r0": 57.95,
+        "L": 350,
+        "n_exp": 1174
+      },
+      {
+        "specimen_label": "HSC3-1",
+        "fy": 433,
+        "b": 141.8,
+        "h": 141.8,
+        "t": 4.3,
+        "r0": 70.9,
+        "L": 420,
+        "n_exp": 1618
+      },
+      {
+        "specimen_label": "HSC3-2",
+        "fy": 433,
+        "b": 141.8,
+        "h": 141.8,
+        "t": 4.3,
+        "r0": 70.9,
+        "L": 420,
+        "n_exp": 1618
+      },
+      {
+        "specimen_label": "HSC3-3",
+        "fy": 433,
+        "b": 141.8,
+        "h": 141.8,
+        "t": 4.3,
+        "r0": 70.9,
+        "L": 420,
+        "n_exp": 1618
+      },
+      {
+        "specimen_label": "HSC4-1",
+        "fy": 357.7,
+        "b": 114.8,
+        "h": 114.8,
+        "t": 3.9,
+        "r0": 57.4,
+        "L": 337,
+        "n_exp": 1150
+      },
+      {
+        "specimen_label": "HSC4-2",
+        "fy": 357.7,
+        "b": 114.8,
+        "h": 114.8,
+        "t": 3.9,
+        "r0": 57.4,
+        "L": 337,
+        "n_exp": 1150
+      },
+      {
+        "specimen_label": "HSC4-3",
+        "fy": 357.7,
+        "b": 114.8,
+        "h": 114.8,
+        "t": 3.9,
+        "r0": 57.4,
+        "L": 337,
+        "n_exp": 1150
+      },
+      {
+        "specimen_label": "HSC5-1",
+        "fy": 373.3,
+        "b": 165.7,
+        "h": 165.7,
+        "t": 5.1,
+        "r0": 82.85,
+        "L": 494,
+        "n_exp": 2309
+      },
+      {
+        "specimen_label": "HSC5-2",
+        "fy": 373.3,
+        "b": 165.7,
+        "h": 165.7,
+        "t": 5.1,
+        "r0": 82.85,
+        "L": 494,
+        "n_exp": 2309
+      },
+      {
+        "specimen_label": "HSC5-3",
+        "fy": 373.3,
+        "b": 165.7,
+        "h": 165.7,
+        "t": 5.1,
+        "r0": 82.85,
+        "L": 494,
+        "n_exp": 2309
+      },
+      {
+        "specimen_label": "HSC6-1",
+        "fy": 324.3,
+        "b": 133.1,
+        "h": 133.1,
+        "t": 4.5,
+        "r0": 66.55,
+        "L": 397,
+        "n_exp": 1535
+      },
+      {
+        "specimen_label": "HSC7-1",
+        "fy": 354.6,
+        "b": 113.6,
+        "h": 113.6,
+        "t": 3.2,
+        "r0": 56.8,
+        "L": 337,
+        "n_exp": 1145
+      },
+      {
+        "specimen_label": "HSC7-2",
+        "fy": 354.6,
+        "b": 113.6,
+        "h": 113.6,
+        "t": 3.2,
+        "r0": 56.8,
+        "L": 337,
+        "n_exp": 1145
+      },
+      {
+        "specimen_label": "HSC7-3",
+        "fy": 354.6,
+        "b": 113.6,
+        "h": 113.6,
+        "t": 3.2,
+        "r0": 56.8,
+        "L": 337,
+        "n_exp": 1145
+      },
+      {
+        "specimen_label": "HSC8-1",
+        "fy": 354.6,
+        "b": 111.3,
+        "h": 111.3,
+        "t": 2,
+        "r0": 55.65,
+        "L": 339,
+        "n_exp": 894
+      },
+      {
+        "specimen_label": "HSC9-1",
+        "fy": 324.3,
+        "b": 130.6,
+        "h": 130.6,
+        "t": 2.3,
+        "r0": 65.3,
+        "L": 396,
+        "n_exp": 1250
+      }
+    ],
+    "note": "Repeated specimens use grouped average capacity values where individual peak loads are unavailable."
+  },
+  "Group_D": {
+    "shared": {},
+    "specimens": [],
+    "note": null
   }
 }
