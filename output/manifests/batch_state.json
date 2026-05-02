@@ -1,7 +1,7 @@
 {
   "schema_version": "cfst-batch-state-v1",
-  "generated_at": "2026-05-02T04:47:56.636377+00:00",
-  "paper_count": 10,
+  "generated_at": "2026-05-02T11:06:30.268305+00:00",
+  "paper_count": 4,
   "papers": [
     {
       "paper_id": "A1-1",
@@ -13,74 +13,26 @@
     },
     {
       "paper_id": "A1-2",
-      "status": "published",
+      "status": "unprepared_package",
       "retry_count": 0,
-      "validated": true,
-      "published": true,
-      "last_error": null
-    },
-    {
-      "paper_id": "A1-3",
-      "status": "published",
-      "retry_count": 0,
-      "validated": true,
-      "published": true,
+      "validated": false,
+      "published": false,
       "last_error": null
     },
     {
       "paper_id": "A1-4",
-      "status": "published",
+      "status": "unprepared_package",
       "retry_count": 0,
-      "validated": true,
-      "published": true,
+      "validated": false,
+      "published": false,
       "last_error": null
     },
     {
       "paper_id": "A1-5",
-      "status": "published",
+      "status": "unprepared_package",
       "retry_count": 0,
-      "validated": true,
-      "published": true,
-      "last_error": null
-    },
-    {
-      "paper_id": "A1-6",
-      "status": "published",
-      "retry_count": 1,
-      "validated": true,
-      "published": true,
-      "last_error": null
-    },
-    {
-      "paper_id": "A1-7",
-      "status": "published",
-      "retry_count": 0,
-      "validated": true,
-      "published": true,
-      "last_error": null
-    },
-    {
-      "paper_id": "A1-8",
-      "status": "published",
-      "retry_count": 1,
-      "validated": true,
-      "published": true,
-      "last_error": null
-    },
-    {
-      "paper_id": "A1-9",
-      "status": "published",
-      "retry_count": 0,
-      "validated": true,
-      "published": true,
-      "last_error": null
-    },
-    {
-      "paper_id": "A1-10",
-      "status": "published",
-      "retry_count": 0,
-      "validated": true,
-      "published": true,
+      "validated": false,
+      "published": false,
       "last_error": null
     }
   ]

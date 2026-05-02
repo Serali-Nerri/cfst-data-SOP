@@ -1,82 +1,67 @@
 [
   {
     "paper_id": "A1-1",
-    "paper_pdf_relpath": "processed/[A1-1].pdf",
+    "package_dir": "/home/thelya/Work/Sop-cfstdata/Pending/[A1-1]",
+    "owned_pdf_path": "/home/thelya/Work/Sop-cfstdata/Pending/[A1-1]/249cb6a0-f110-47b0-8ddf-e9185a049fe1_origin.pdf",
+    "full_md_path": "/home/thelya/Work/Sop-cfstdata/Pending/[A1-1]/full.md",
+    "images_dir": "/home/thelya/Work/Sop-cfstdata/Pending/[A1-1]/images",
+    "content_list_path": "/home/thelya/Work/Sop-cfstdata/Pending/[A1-1]/content_list_v2.json",
     "worker_output_json_path": "/home/thelya/Work/Sop-cfstdata/output/tmp/A1-1/A1-1.json",
+    "worker_output_workspace_path": "output/tmp/A1-1/A1-1.json",
     "final_output_json_path": "/home/thelya/Work/Sop-cfstdata/output/output/A1-1.json",
     "expected_specimen_count": null,
-    "status": "prepared"
+    "status": "prepared",
+    "issues": []
   },
   {
     "paper_id": "A1-2",
-    "paper_pdf_relpath": "processed/[A1-2].pdf",
+    "package_dir": "/home/thelya/Work/Sop-cfstdata/Pending/[A1-2] SCHNEIDER S P. Axially loaded concrete-filled steel tubes[J]. Journal of Structural Engineering, 1998, 124(10): 1125-1138.pdf-cbb7afc1-9c48-4901-92e3-fa097ba79554",
+    "owned_pdf_path": null,
+    "full_md_path": null,
+    "images_dir": null,
+    "content_list_path": null,
     "worker_output_json_path": "/home/thelya/Work/Sop-cfstdata/output/tmp/A1-2/A1-2.json",
+    "worker_output_workspace_path": "output/tmp/A1-2/A1-2.json",
     "final_output_json_path": "/home/thelya/Work/Sop-cfstdata/output/output/A1-2.json",
     "expected_specimen_count": null,
-    "status": "prepared"
-  },
-  {
-    "paper_id": "A1-3",
-    "paper_pdf_relpath": "processed/[A1-3].pdf",
-    "worker_output_json_path": "/home/thelya/Work/Sop-cfstdata/output/tmp/A1-3/A1-3.json",
-    "final_output_json_path": "/home/thelya/Work/Sop-cfstdata/output/output/A1-3.json",
-    "expected_specimen_count": null,
-    "status": "prepared"
+    "status": "unprepared_package",
+    "issues": [
+      "package_not_shortened",
+      "run_prepare_rawdata_package:/home/thelya/Work/Sop-cfstdata/Pending/[A1-2] SCHNEIDER S P. Axially loaded concrete-filled steel tubes[J]. Journal of Structural Engineering, 1998, 124(10): 1125-1138.pdf-cbb7afc1-9c48-4901-92e3-fa097ba79554"
+    ]
   },
   {
     "paper_id": "A1-4",
-    "paper_pdf_relpath": "processed/[A1-4].pdf",
+    "package_dir": "/home/thelya/Work/Sop-cfstdata/Pending/[A1-4] 李斌, 郝润霞. 钢管混凝土柱的承载能力分析[J]. 包头钢铁学院学报, 2005, 24(1): 5-8.pdf-7273ad7b-10e0-46ab-81d9-b581ee71b79a",
+    "owned_pdf_path": null,
+    "full_md_path": null,
+    "images_dir": null,
+    "content_list_path": null,
     "worker_output_json_path": "/home/thelya/Work/Sop-cfstdata/output/tmp/A1-4/A1-4.json",
+    "worker_output_workspace_path": "output/tmp/A1-4/A1-4.json",
     "final_output_json_path": "/home/thelya/Work/Sop-cfstdata/output/output/A1-4.json",
     "expected_specimen_count": null,
-    "status": "prepared"
+    "status": "unprepared_package",
+    "issues": [
+      "package_not_shortened",
+      "run_prepare_rawdata_package:/home/thelya/Work/Sop-cfstdata/Pending/[A1-4] 李斌, 郝润霞. 钢管混凝土柱的承载能力分析[J]. 包头钢铁学院学报, 2005, 24(1): 5-8.pdf-7273ad7b-10e0-46ab-81d9-b581ee71b79a"
+    ]
   },
   {
     "paper_id": "A1-5",
-    "paper_pdf_relpath": "processed/[A1-5].pdf",
+    "package_dir": "/home/thelya/Work/Sop-cfstdata/Pending/[A1-5] 韩林海. 钢管高强混凝土轴压力学性能的理论分析与试验研究[J]. 工业建筑, 1997, 27(11): 39-44.pdf-9b4cf727-707e-4ede-ab46-b3ff71a5e3a1",
+    "owned_pdf_path": null,
+    "full_md_path": null,
+    "images_dir": null,
+    "content_list_path": null,
     "worker_output_json_path": "/home/thelya/Work/Sop-cfstdata/output/tmp/A1-5/A1-5.json",
+    "worker_output_workspace_path": "output/tmp/A1-5/A1-5.json",
     "final_output_json_path": "/home/thelya/Work/Sop-cfstdata/output/output/A1-5.json",
     "expected_specimen_count": null,
-    "status": "prepared"
-  },
-  {
-    "paper_id": "A1-6",
-    "paper_pdf_relpath": "processed/[A1-6].pdf",
-    "worker_output_json_path": "/home/thelya/Work/Sop-cfstdata/output/tmp/A1-6/A1-6.json",
-    "final_output_json_path": "/home/thelya/Work/Sop-cfstdata/output/output/A1-6.json",
-    "expected_specimen_count": null,
-    "status": "prepared"
-  },
-  {
-    "paper_id": "A1-7",
-    "paper_pdf_relpath": "processed/[A1-7].pdf",
-    "worker_output_json_path": "/home/thelya/Work/Sop-cfstdata/output/tmp/A1-7/A1-7.json",
-    "final_output_json_path": "/home/thelya/Work/Sop-cfstdata/output/output/A1-7.json",
-    "expected_specimen_count": null,
-    "status": "prepared"
-  },
-  {
-    "paper_id": "A1-8",
-    "paper_pdf_relpath": "processed/[A1-8].pdf",
-    "worker_output_json_path": "/home/thelya/Work/Sop-cfstdata/output/tmp/A1-8/A1-8.json",
-    "final_output_json_path": "/home/thelya/Work/Sop-cfstdata/output/output/A1-8.json",
-    "expected_specimen_count": null,
-    "status": "prepared"
-  },
-  {
-    "paper_id": "A1-9",
-    "paper_pdf_relpath": "processed/[A1-9].pdf",
-    "worker_output_json_path": "/home/thelya/Work/Sop-cfstdata/output/tmp/A1-9/A1-9.json",
-    "final_output_json_path": "/home/thelya/Work/Sop-cfstdata/output/output/A1-9.json",
-    "expected_specimen_count": null,
-    "status": "prepared"
-  },
-  {
-    "paper_id": "A1-10",
-    "paper_pdf_relpath": "processed/[A1-10].pdf",
-    "worker_output_json_path": "/home/thelya/Work/Sop-cfstdata/output/tmp/A1-10/A1-10.json",
-    "final_output_json_path": "/home/thelya/Work/Sop-cfstdata/output/output/A1-10.json",
-    "expected_specimen_count": null,
-    "status": "prepared"
+    "status": "unprepared_package",
+    "issues": [
+      "package_not_shortened",
+      "run_prepare_rawdata_package:/home/thelya/Work/Sop-cfstdata/Pending/[A1-5] 韩林海. 钢管高强混凝土轴压力学性能的理论分析与试验研究[J]. 工业建筑, 1997, 27(11): 39-44.pdf-9b4cf727-707e-4ede-ab46-b3ff71a5e3a1"
+    ]
   }
 ]

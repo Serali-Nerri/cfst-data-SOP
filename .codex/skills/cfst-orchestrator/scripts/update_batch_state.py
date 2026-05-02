@@ -6,16 +6,8 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
-from typing import Any
 
-
-def read_json(path: Path) -> Any:
-    return json.loads(path.read_text(encoding="utf-8"))
-
-
-def write_json(path: Path, payload: Any) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+from orchestrator_common import atomic_write_json, read_json, validate_status
 
 
 def parse_bool(raw: str) -> bool:
@@ -49,13 +41,27 @@ def main() -> int:
     args = parser.parse_args()
 
     payload = read_json(args.batch_state)
+    if not isinstance(payload, dict):
+        print(f"[FAIL] batch state must contain a JSON object: {args.batch_state}")
+        return 1
     papers = payload.get("papers", [])
-    entry = next((item for item in papers if item.get("paper_id") == args.paper_id), None)
+    if not isinstance(papers, list):
+        print(f"[FAIL] batch state papers must be a list: {args.batch_state}")
+        return 1
+    entry = next(
+        (item for item in papers if isinstance(item, dict) and item.get("paper_id") == args.paper_id),
+        None,
+    )
     if entry is None:
         print(f"[FAIL] paper_id not found in batch state: {args.paper_id}")
         return 1
 
     if args.status is not None:
+        try:
+            validate_status(args.status)
+        except ValueError as exc:
+            print(f"[FAIL] {exc}")
+            return 1
         entry["status"] = args.status
     if args.retry_count is not None:
         if args.retry_count < 0:
@@ -73,7 +79,7 @@ def main() -> int:
     if args.clear_last_error:
         entry["last_error"] = None
 
-    write_json(args.batch_state, payload)
+    atomic_write_json(args.batch_state, payload)
     print(json.dumps(entry, ensure_ascii=False))
     return 0
 

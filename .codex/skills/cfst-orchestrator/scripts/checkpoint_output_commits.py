@@ -66,25 +66,26 @@ def _only_output_files(paths: list[str], output_dir: str) -> tuple[bool, list[st
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Checkpoint output-only commits and periodic push.")
-    parser.add_argument("--processed-count", required=True, type=int, help="Total processed papers so far.")
+    parser.add_argument("--checkpoint-count", required=True, type=int, help="Total handled papers so far.")
     parser.add_argument("--commit-every", type=int, default=10, help="Commit interval.")
     parser.add_argument("--push-every", type=int, default=20, help="Push interval.")
     parser.add_argument(
         "--output-dir",
-        default="output",
-        help="Final published output directory path in repo (default: output).",
+        default="output/output",
+        help="Final published output directory path in repo (default: output/output).",
     )
     parser.add_argument("--remote", default="origin", help="Remote name for push.")
     parser.add_argument("--branch", default=None, help="Branch name for push (defaults to current branch).")
     parser.add_argument(
         "--message-template",
-        default="cfst-output: processed {count} papers",
+        default="cfst-output: handled {count} papers",
         help="Commit message template. Use {count} placeholder.",
     )
     args = parser.parse_args()
 
-    if args.processed_count <= 0:
-        return _fail("--processed-count must be > 0.")
+    checkpoint_count = args.checkpoint_count
+    if checkpoint_count <= 0:
+        return _fail("--checkpoint-count must be > 0.")
     if args.commit_every <= 0 or args.push_every <= 0:
         return _fail("--commit-every and --push-every must be > 0.")
 
@@ -96,12 +97,12 @@ def main() -> int:
             code=2,
         )
 
-    commit_due = args.processed_count % args.commit_every == 0
-    push_due = args.processed_count % args.push_every == 0
+    commit_due = checkpoint_count % args.commit_every == 0
+    push_due = checkpoint_count % args.push_every == 0
 
     summary = {
         "repo_root": str(repo_root),
-        "processed_count": args.processed_count,
+        "checkpoint_count": checkpoint_count,
         "commit_due": commit_due,
         "push_due": push_due,
         "commit_done": False,
@@ -125,7 +126,7 @@ def main() -> int:
                     + ". Unstage them before checkpoint commit."
                 )
 
-            message = args.message_template.format(count=args.processed_count)
+            message = args.message_template.format(count=checkpoint_count)
             commit_proc = _run(
                 ["git", "-C", str(repo_root), "commit", "-m", message],
             )

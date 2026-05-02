@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Prepare a CFST rawdata package for worker extraction.
+"""Prepare one Pending CFST rawdata package for worker extraction.
 
 This is the parent-side rawdata preprocessing step:
 
-1. Rename a long rawdata directory like "[A1-1] Citation..." to "[A1-1]".
+1. Rename a long Pending directory like "[A1-1] Citation..." to "[A1-1]".
 2. Crop table images from content_list_v2.json + *_origin.pdf and replace
    HTML table blocks in full.md.
 3. Remove top-level parser byproducts so the package keeps only full.md,
@@ -14,16 +14,15 @@ from __future__ import annotations
 
 import argparse
 import json
-import re
 import shutil
 import sys
 from dataclasses import dataclass
 from pathlib import Path
 
+from orchestrator_common import normalize_paper_id, parse_paper_id as parse_package_paper_id
 from replace_html_tables_with_images import ProcessResult, RawdataError, process_rawdata, report_dict
 
 
-PAPER_ID_RE = re.compile(r"^\[?([A-Za-z]+\d+-\d+)\]?")
 KEEP_FILE_NAMES = {"full.md", "content_list_v2.json"}
 KEEP_DIR_NAMES = {"images"}
 
@@ -36,8 +35,8 @@ class CleanupResult:
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Prepare one rawdata package for CFST extraction workers.")
-    parser.add_argument("rawdata_dir", type=Path, help="Rawdata paper directory.")
+    parser = argparse.ArgumentParser(description="Prepare one Pending package for CFST extraction workers.")
+    parser.add_argument("rawdata_dir", type=Path, help="Pending paper package directory.")
     parser.add_argument(
         "--paper-id",
         help="Paper id such as A1-1. Defaults to parsing the rawdata directory name.",
@@ -71,16 +70,14 @@ def parse_args() -> argparse.Namespace:
 
 def parse_paper_id(rawdata_dir: Path, paper_id: str | None) -> str:
     if paper_id:
-        value = paper_id.strip()
-        value = value[1:-1] if value.startswith("[") and value.endswith("]") else value
-        match = PAPER_ID_RE.match(value)
-        if not match:
+        try:
+            return normalize_paper_id(paper_id)
+        except ValueError as exc:
             raise RawdataError(f"invalid paper id: {paper_id}")
-        return match.group(1)
-    match = PAPER_ID_RE.match(rawdata_dir.name)
-    if not match:
+    parsed = parse_package_paper_id(rawdata_dir.name)
+    if not parsed:
         raise RawdataError(f"cannot parse paper id from rawdata directory name: {rawdata_dir.name}")
-    return match.group(1)
+    return parsed
 
 
 def shorten_rawdata_dir(rawdata_dir: Path, paper_id: str, dry_run: bool) -> Path:
@@ -206,10 +203,10 @@ def main() -> int:
         args.report_json.parent.mkdir(parents=True, exist_ok=True)
         args.report_json.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
-    if table_result.images_ready != table_result.table_count:
-        return 2
     if table_result.count_mismatch and not args.allow_count_mismatch:
         return 3
+    if table_result.images_ready != table_result.table_count:
+        return 2
     return 0
 
 

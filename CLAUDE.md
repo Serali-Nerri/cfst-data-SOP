@@ -1,76 +1,88 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Claude Code (claude.ai/code) when working with this repository.
 
-## Repository layout
+## Repository Layout
 
-- `cfst-orchestrator/` is the parent orchestration skill source tree.
-- `cfst-column-extractor/` is the child single-paper extraction skill source tree.
-- `.codex/skills/cfst-orchestrator/` is the runtime-loaded parent skill path.
-- `.codex/skills/cfst-column-extractor/` is the runtime-loaded child skill path.
-- If you change either source skill, verify the matching runtime copy under `.codex/skills/` is still aligned before considering the task done.
-- When modifying either skill, also consult `.claude/skills/skill-creator/SKILL.md` as the meta-reference for skill authoring. Use it to keep `SKILL.md` concise, move detailed rules into `references/`, and keep `agents/openai.yaml` aligned with the skill instructions and trigger wording.
-- The parent skill owns orchestration and publishing:
-  - `cfst-orchestrator/SKILL.md`: parent-agent orchestration contract
-  - `cfst-orchestrator/scripts/*.py`: batch preparation, worktree isolation, sandbox execution, state updates, publication, and checkpointing
-  - `cfst-orchestrator/agents/openai.yaml`: parent skill display metadata
-- The child skill owns one-paper extraction policy:
-  - `cfst-column-extractor/SKILL.md`: single-paper extraction contract
-  - `cfst-column-extractor/references/extraction-rules.md`: scope and extraction rules for all CFST column ultimate-capacity data
-  - `cfst-column-extractor/references/fc-basis-rules.md`: concrete-strength basis decision framework for `fco_mpa` / `fc_type`
-  - `cfst-column-extractor/references/section_shapes.jpg`: visual reference for section groups and `r0_mm`
-  - `cfst-column-extractor/references/cfst-extraction-schema.json`: machine-readable schema 1.0.0
-  - `cfst-column-extractor/references/json-schema-requirements.md`: readable JSON shape, examples, inheritance rules, and validation expectations
-  - `cfst-column-extractor/scripts/*.py`: sandbox-only extraction helpers such as validation and safe arithmetic
-  - `cfst-column-extractor/agents/openai.yaml`: child skill display metadata
+- `.codex/skills/cfst-orchestrator/` is the runtime-loaded parent orchestration skill.
+- `.codex/skills/cfst-column-extractor/` is the runtime-loaded child single-paper extraction skill.
+- The parent owns `Pending/` package preparation, batch manifests/state, worker workspace/spec generation, sandbox execution, publication, and checkpointing.
+- The child owns one-paper CFST column extraction policy, reference rules, JSON authoring, safe arithmetic, and validation behavior.
+- When modifying either skill, keep `SKILL.md` concise and keep `agents/openai.yaml` aligned with the skill instructions and trigger wording.
 
-## Common commands
+## Current Workflow
 
-There is no package manager file, lint configuration, or automated unit-test framework checked into this repo. The checked-in operational commands are the Python scripts below, run from the repository root.
+The current orchestration model is Pending-package-first. Do not introduce a separate `processed/[paper_id].pdf` staging requirement.
 
-Bootstrap git so worktree-based execution can run:
+Input packages live under:
 
-```bash
-python .codex/skills/cfst-orchestrator/scripts/bootstrap_git_repo.py \
-  --repo-root . \
-  --initial-empty-commit
+```text
+Pending/
 ```
 
-Prepare a batch workspace from `processed/` PDFs:
+Unprepared packages use long parser/citation directory names, for example:
+
+```text
+Pending/[A1-10] KATO B. Column curves ...pdf-<uuid>/
+```
+
+Prepared packages are shortened to:
+
+```text
+Pending/[A1-10]/
+```
+
+A prepared package must contain:
+
+```text
+full.md
+content_list_v2.json
+images/
+*_origin.pdf
+```
+
+## Common Commands
+
+Prepare one Pending package:
+
+```bash
+python .codex/skills/cfst-orchestrator/scripts/prepare_rawdata_package.py \
+  'Pending/[A1-10] long citation directory name'
+```
+
+Prepare batch manifests from Pending packages:
 
 ```bash
 python .codex/skills/cfst-orchestrator/scripts/prepare_batch.py \
-  --processed-root processed
+  --pending-root Pending
 ```
 
-Create and remove a per-paper worktree:
+This preserves existing `batch_state.json` operational fields for still-prepared papers. Pass `--reset-state` only when intentionally restarting state tracking.
+
+Build one worker workspace, job spec, and worker brief:
 
 ```bash
-python .codex/skills/cfst-orchestrator/scripts/git_worktree_isolation.py create \
-  --paper-dir '<paper_pdf_relpath>' \
-  --skill-dir .codex/skills/cfst-column-extractor \
-  --output-dir output/tmp/<paper_id>
-
-python .codex/skills/cfst-orchestrator/scripts/git_worktree_isolation.py remove \
-  --worktree-path '<worktree_path>' \
-  --delete-branch
+python .codex/skills/cfst-orchestrator/scripts/build_worker_job_spec.py \
+  --worker-jobs output/manifests/worker_jobs.json \
+  --paper-id A1-10
 ```
 
-Validate one extracted output. This is the closest thing to a single-test command, and it must run through the sandbox wrapper:
+On retry, regenerate the brief with the exact previous failure:
 
 ```bash
-python .codex/skills/cfst-orchestrator/scripts/worker_sandbox.py \
-  --worktree-path <worktree_path> \
-  --paper-dir-relpath <paper_pdf_relpath> \
-  --skill-dir-relpath .codex/skills/cfst-column-extractor \
-  --output-dir output/tmp/<paper_id> \
-  --host-output-dir <output_host_path> \
-  --cwd-mode workspace \
-  -- \
-  python3 .codex/skills/cfst-column-extractor/scripts/validate_single_output.py \
-    --json-path output/tmp/<paper_id>/<paper_id>.json \
-    --strict-rounding
+python .codex/skills/cfst-orchestrator/scripts/build_worker_job_spec.py \
+  --worker-jobs output/manifests/worker_jobs.json \
+  --paper-id A1-10 \
+  --retry-reason '<exact failure>'
 ```
+
+The generated worker prompt is:
+
+```text
+output/tmp/<paper_id>/worker_brief.md
+```
+
+Validate one extracted output through the generated `validation_command` in `worker_brief.md`. The sandbox command uses `worker_sandbox.py`, which mounts the worker package read-only, the child skill read-only, and the declared output directory read-write.
 
 Publish validated temp outputs into canonical output files:
 
@@ -85,28 +97,29 @@ python .codex/skills/cfst-orchestrator/scripts/publish_validated_output.py \
   --strict-rounding
 ```
 
+Remove generated worker workspaces after the parent no longer needs them:
+
+```bash
+python .codex/skills/cfst-orchestrator/scripts/cleanup_worker_workspace.py \
+  --job-spec output/tmp/<paper_id>/worker_job_spec.json
+```
+
 Optional output-only checkpoint commit/push flow:
 
 ```bash
 python .codex/skills/cfst-orchestrator/scripts/checkpoint_output_commits.py \
-  --processed-count <n> \
+  --checkpoint-count <published_plus_failed_count> \
   --output-dir output/output
 ```
 
-## High-level architecture
+## Architecture Notes
 
-- This repository is a skill bundle, not a normal Python package or application. Most project behavior lives in prompt/policy documents, while the Python scripts enforce orchestration boundaries and validation.
-- `prepare_batch.py` scans `processed/` for PDFs whose filenames start with citation tags like `[A2-104]`, runs `pdfinfo`, and writes the parent-owned manifests:
-  - `output/manifests/batch_manifest.json`
-  - `output/manifests/worker_jobs.json`
-  - `output/manifests/batch_state.json`
-- Multi-paper extraction is a parent/worker pipeline. The parent reads `worker_jobs.json`, creates one isolated worktree per prepared paper, launches one sandboxed worker per paper, tracks lifecycle in `batch_state.json`, and only publishes outputs after validation succeeds.
-- Isolation is enforced in two layers:
-  - `git_worktree_isolation.py` creates a minimal per-paper git worktree
-  - `worker_sandbox.py` runs the worker command under `bwrap`, mounting only the owned paper input read-only, the skill docs/scripts read-only, and the declared output directory read-write
-- Worker-authoritative evidence is the owned rawdata bundle plus the owned PDF fallback. Default to `rawdata/[<paper_id>]/full.md` or the matching rawdata directory, open only referenced `images/` files as needed, use the PDF only when Markdown/images are missing, unreadable, incomplete, or conflicting, and use `content_list_v2.json` only for locating parsed/PDF blocks. The child skill files are `cfst-column-extractor/SKILL.md`, `cfst-column-extractor/references/extraction-rules.md`, `cfst-column-extractor/references/fc-basis-rules.md`, `cfst-column-extractor/references/section_shapes.jpg`, `cfst-column-extractor/references/cfst-extraction-schema.json`, and `cfst-column-extractor/references/json-schema-requirements.md`.
-- Each worker writes exactly one temporary JSON artifact under `output/tmp/<paper_id>/`: `<paper_id>.json`.
-- Published artifacts are canonical only after `publish_validated_output.py` copies validated temp JSON into `output/output/<paper_id>.json`. Workers should never write final outputs directly.
-- `cfst-column-extractor/scripts/safe_calc.py` and `cfst-column-extractor/scripts/validate_single_output.py` are sandbox-only helpers. They require `CFST_SANDBOX=1`, so invoke them through `worker_sandbox.py`, not directly from the host shell.
-- External runtime assumptions that are not vendored in the repo: a git repository with `HEAD`, `bwrap`/bubblewrap, `pdfinfo`, and Python available for validation.
-- There is no README, no repo-local Cursor rule, and no Copilot instruction file in this repo. The source of truth is the parent `cfst-orchestrator/SKILL.md` for orchestration and the child `cfst-column-extractor/` files for one-paper extraction behavior.
+- `prepare_batch.py` scans `Pending/`, not `processed/`.
+- `worker_jobs.json` is package-first: it records package paths, owned `*_origin.pdf`, output JSON path, and readiness status.
+- `build_worker_job_spec.py` creates a per-paper workspace under `tmp/cfst-worker-spaces/`, copies the prepared package and child skill there, writes `worker_job_spec.json`, and writes a concise `worker_brief.md`.
+- Worker briefs should expose only `paper_id`, `package_dir`, `owned_pdf_path`, `output_json_path`, `sandbox_command_prefix`, and `validation_command`.
+- `full.md`, `images/`, and `content_list_v2.json` are fixed members under `package_dir`; do not repeat them as worker input fields.
+- Parent-only details such as workspace paths, mount paths, and sandbox arguments belong in `worker_job_spec.json`, not in extraction inputs.
+- `cleanup_worker_workspace.py` removes only generated workspaces recorded in `worker_job_spec.json` and rejects paths outside `tmp/cfst-worker-spaces/`.
+- Published artifacts are canonical only after `publish_validated_output.py` copies validated temp JSON into `output/output/<paper_id>.json`.
+- `cfst-column-extractor/scripts/safe_calc.py` and `cfst-column-extractor/scripts/validate_single_output.py` require `CFST_SANDBOX=1`; invoke them through the parent-provided sandbox command, not directly from the host shell during worker extraction.

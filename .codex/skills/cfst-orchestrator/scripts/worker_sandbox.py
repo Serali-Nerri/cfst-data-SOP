@@ -2,7 +2,7 @@
 """Run a worker command in a strict bubblewrap filesystem sandbox.
 
 The sandbox only exposes:
-- one paper directory (read-only)
+- one paper package directory (read-only)
 - one output directory (read-write)
 - skill policy paths (read-only): SKILL.md, references/, scripts/
 """
@@ -45,12 +45,12 @@ def _resolve_base_path(cwd: Path, raw_path: str, label: str) -> Path:
 def _resolve_under(base_dir: Path, raw_rel: str, label: str) -> tuple[Path, str]:
     raw = Path(raw_rel)
     if raw.is_absolute():
-        raise ValueError(f"{label} must be a relative path under worktree: {raw_rel}")
+        raise ValueError(f"{label} must be a relative path under workspace: {raw_rel}")
     abs_path = (base_dir / raw).resolve()
     try:
         rel = abs_path.relative_to(base_dir).as_posix()
     except ValueError as exc:
-        raise ValueError(f"{label} escapes worktree: {raw_rel}") from exc
+        raise ValueError(f"{label} escapes workspace: {raw_rel}") from exc
     return abs_path, rel
 
 
@@ -92,16 +92,20 @@ def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Run one worker command in a strict bubblewrap sandbox."
     )
-    parser.add_argument("--worktree-path", required=True, help="Worker worktree path.")
     parser.add_argument(
-        "--paper-dir-relpath",
+        "--workspace-path",
         required=True,
-        help="Paper path (file or directory) relative to worktree root.",
+        help="Worker workspace path.",
+    )
+    parser.add_argument(
+        "--package-relpath",
+        required=True,
+        help="Paper package path relative to workspace root.",
     )
     parser.add_argument(
         "--skill-dir-relpath",
         default=DEFAULT_EXTRACTOR_SKILL_DIR,
-        help="Extractor skill folder path relative to worktree root.",
+        help="Extractor skill folder path relative to workspace root.",
     )
     parser.add_argument(
         "--output-dir",
@@ -111,11 +115,11 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--host-output-dir",
         default=None,
-        help="Optional host path to bind writable at /workspace/<output-dir>. Use to persist outputs outside the worktree.",
+        help="Optional host path to bind writable at /workspace/<output-dir>. Use to persist outputs outside the worker workspace.",
     )
     parser.add_argument(
         "--cwd-mode",
-        choices=("workspace", "paper"),
+        choices=("workspace", "package"),
         default="workspace",
         help="Sandbox working directory for worker command.",
     )
@@ -143,15 +147,15 @@ def main() -> int:
 
     cwd = Path.cwd()
     try:
-        worktree_path = _resolve_base_path(cwd, args.worktree_path, "Worktree")
+        workspace_path = _resolve_base_path(cwd, args.workspace_path, "Workspace")
     except ValueError as exc:
         return _fail(str(exc))
-    if not worktree_path.is_dir():
-        return _fail(f"Worktree path is not a directory: {worktree_path}")
+    if not workspace_path.is_dir():
+        return _fail(f"Workspace path is not a directory: {workspace_path}")
 
     try:
-        paper_abs, paper_rel = _resolve_under(worktree_path, args.paper_dir_relpath, "Paper dir")
-        skill_abs, skill_rel = _resolve_under(worktree_path, args.skill_dir_relpath, "Skill dir")
+        package_abs, package_rel = _resolve_under(workspace_path, args.package_relpath, "Package dir")
+        skill_abs, skill_rel = _resolve_under(workspace_path, args.skill_dir_relpath, "Skill dir")
     except ValueError as exc:
         return _fail(str(exc))
 
@@ -160,12 +164,12 @@ def main() -> int:
             output_abs = _resolve_host_path(cwd, args.host_output_dir)
             output_rel = _resolve_mount_relpath(args.output_dir, "Output dir")
         else:
-            output_abs, output_rel = _resolve_under(worktree_path, args.output_dir, "Output dir")
+            output_abs, output_rel = _resolve_under(workspace_path, args.output_dir, "Output dir")
     except ValueError as exc:
         return _fail(str(exc))
 
-    if not paper_abs.exists():
-        return _fail(f"Paper path not found: {paper_abs}")
+    if not package_abs.is_dir():
+        return _fail(f"Package directory not found: {package_abs}")
     if not skill_abs.is_dir():
         return _fail(f"Skill directory not found: {skill_abs}")
 
@@ -187,7 +191,7 @@ def main() -> int:
     if not worker_cmd:
         return _fail("Missing worker command. Use -- <command> <args...>")
 
-    paper_dst = f"/workspace/{paper_rel}"
+    package_dst = f"/workspace/{package_rel}"
     output_dst = f"/workspace/{output_rel}"
     skill_base_dst = f"/workspace/{skill_rel}"
     skill_file_dst = f"{skill_base_dst}/SKILL.md"
@@ -195,15 +199,11 @@ def main() -> int:
     scripts_dst = f"{skill_base_dst}/scripts"
 
     mkdir_targets = set()
-    # For file inputs, only create parent directories before the bind mount.
-    paper_workspace_rel = (
-        str(PurePosixPath(paper_rel).parent) if paper_abs.is_file() else paper_rel
-    )
-    mkdir_targets.update(_workspace_dirs_for(paper_workspace_rel))
+    mkdir_targets.update(_workspace_dirs_for(package_rel))
     mkdir_targets.update(_workspace_dirs_for(output_rel))
     mkdir_targets.update(_workspace_dirs_for(skill_rel))
 
-    sandbox_cwd = "/workspace" if args.cwd_mode == "workspace" else paper_dst
+    sandbox_cwd = "/workspace" if args.cwd_mode == "workspace" else package_dst
 
     cmd: list[str] = [
         bwrap_bin,
@@ -232,7 +232,7 @@ def main() -> int:
         cmd.extend(["--dir", dst])
 
     # Keep source paper inputs immutable; only the declared output directory is writable.
-    cmd.extend(["--ro-bind", str(paper_abs), paper_dst])
+    cmd.extend(["--ro-bind", str(package_abs), package_dst])
     cmd.extend(["--bind", str(output_abs), output_dst])
     cmd.extend(["--ro-bind", str(skill_file), skill_file_dst])
     cmd.extend(["--ro-bind", str(references_dir), references_dst])

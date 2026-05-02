@@ -1,17 +1,17 @@
 {
-  "generated_at": "2026-05-02T09:12:07.108636+00:00",
+  "generated_at": "2026-05-02T11:16:53.388400+00:00",
   "requested_paper_ids": [
-    "A1-9"
+    "A1-1"
   ],
   "published": 1,
   "failed": 0,
   "items": [
     {
-      "timestamp": "2026-05-02T09:12:07.315991+00:00",
-      "paper_id": "A1-9",
-      "source_path": "output/tmp_reextract_20260502-165510/A1-9/A1-9.json",
-      "destination_path": "output/output/A1-9.json",
-      "overwritten": true,
+      "timestamp": "2026-05-02T11:16:53.627000+00:00",
+      "paper_id": "A1-1",
+      "source_path": "/home/thelya/Work/Sop-cfstdata/output/tmp/A1-1/A1-1.json",
+      "destination_path": "/home/thelya/Work/Sop-cfstdata/output/output/A1-1.json",
+      "overwritten": false,
       "published": true,
       "message": "published"
     }

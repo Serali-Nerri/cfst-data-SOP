@@ -153,6 +153,7 @@ def resolve_paths(
     content_list: Path | None = None,
     pdf_path: Path | None = None,
     images_dir: Path | None = None,
+    create_images_dir: bool = True,
 ) -> RawdataPaths:
     source = input_path.resolve()
     if source.is_dir():
@@ -184,9 +185,9 @@ def resolve_paths(
             raise RawdataError(f"{label} not found: {path}")
         if not path.is_file():
             raise RawdataError(f"{label} is not a file: {path}")
-    if not images_dir.exists():
+    if not images_dir.exists() and create_images_dir:
         images_dir.mkdir(parents=True)
-    if not images_dir.is_dir():
+    if images_dir.exists() and not images_dir.is_dir():
         raise RawdataError(f"images path is not a directory: {images_dir}")
 
     return RawdataPaths(rawdata_dir, full_md, content_list, images_dir, pdf_path)
@@ -592,6 +593,11 @@ def replace_html_tables(
     return len(html_matches), len(replacements), skipped, warnings
 
 
+def count_html_tables(md_path: Path) -> int:
+    source = md_path.read_text(encoding="utf-8")
+    return len(list(HTML_TABLE_RE.finditer(source)))
+
+
 def process_rawdata(
     input_path: Path,
     *,
@@ -607,9 +613,53 @@ def process_rawdata(
     strict_count: bool = False,
     dry_run: bool = False,
 ) -> ProcessResult:
-    paths = resolve_paths(input_path, content_list, pdf_path, images_dir)
+    paths = resolve_paths(
+        input_path,
+        content_list,
+        pdf_path,
+        images_dir,
+        create_images_dir=not dry_run,
+    )
     pages = load_pages(paths.content_list)
     tables = collect_tables(pages, paths.images_dir, image_format)
+    html_count = count_html_tables(paths.full_md)
+    if strict_count and html_count != len(tables):
+        warnings = [
+            f"table count mismatch: content_list_v2.json tables={len(tables)}, full.md HTML tables={html_count}",
+            "strict count enabled; images and full.md were not modified",
+        ]
+        return ProcessResult(
+            rawdata_dir=paths.rawdata_dir,
+            full_md=paths.full_md,
+            table_count=len(tables),
+            html_table_count=html_count,
+            count_mismatch=True,
+            images_ready=0,
+            cropped_count=0,
+            replaced_count=0,
+            skipped_replacements=html_count,
+            warnings=warnings,
+            table_specs=tables,
+        )
+
+    if not tables:
+        html_count, replaced_count, skipped, replace_warnings = replace_html_tables(
+            paths.full_md, tables, output_path, in_place, strict_count, dry_run
+        )
+        return ProcessResult(
+            rawdata_dir=paths.rawdata_dir,
+            full_md=paths.full_md,
+            table_count=0,
+            html_table_count=html_count,
+            count_mismatch=html_count != 0,
+            images_ready=0,
+            cropped_count=0,
+            replaced_count=replaced_count,
+            skipped_replacements=skipped,
+            warnings=replace_warnings,
+            table_specs=tables,
+        )
+
     cropped_count, images_ready, crop_warnings = crop_tables(
         paths, tables, dpi, overwrite, trim_table_top, dry_run
     )

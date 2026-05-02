@@ -6,10 +6,21 @@ from __future__ import annotations
 import argparse
 import importlib.util
 import json
+import os
 import shutil
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, cast
+
+from orchestrator_common import (
+    PUBLISHED_STATUS,
+    PUBLISH_FAILED_STATUS,
+    READY_FOR_PUBLICATION_STATUS,
+    atomic_write_json,
+    read_json,
+    validate_status,
+    write_json,
+)
 
 DEFAULT_EXTRACTOR_SKILL_DIR = Path(".codex/skills/cfst-column-extractor")
 
@@ -34,15 +45,6 @@ def load_validate_payload(extractor_skill_dir: Path) -> ValidatePayload:
     return cast(ValidatePayload, validate_payload)
 
 
-def read_json(path: Path) -> Any:
-    return json.loads(path.read_text(encoding="utf-8"))
-
-
-def write_json(path: Path, payload: Any) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
-
-
 def payload_is_valid(payload: Any) -> bool | None:
     if not isinstance(payload, dict):
         return None
@@ -62,8 +64,8 @@ def append_jsonl(path: Path, payload: Any) -> None:
         handle.write(json.dumps(payload, ensure_ascii=False) + "\n")
 
 
-def update_batch_state(
-    batch_state_path: Path,
+def apply_batch_state_update(
+    batch_state_payload: dict[str, Any],
     paper_id: str,
     *,
     published: bool,
@@ -71,8 +73,8 @@ def update_batch_state(
     status: str,
     last_error: str | None,
 ) -> None:
-    payload = read_json(batch_state_path)
-    papers = payload.get("papers", [])
+    validate_status(status)
+    papers = batch_state_payload.get("papers", [])
     for paper in papers:
         if paper.get("paper_id") != paper_id:
             continue
@@ -80,10 +82,45 @@ def update_batch_state(
         paper["validated"] = validated
         paper["status"] = status
         paper["last_error"] = last_error
-        write_json(batch_state_path, payload)
         return
 
     raise ValueError(f"paper_id not found in batch state: {paper_id}")
+
+
+def read_batch_state(batch_state_path: Path) -> tuple[dict[str, Any], dict[str, dict[str, Any]]]:
+    payload = read_json(batch_state_path)
+    if not isinstance(payload, dict):
+        raise ValueError(f"batch state must contain a JSON object: {batch_state_path}")
+    papers = payload.get("papers", [])
+    if not isinstance(papers, list):
+        raise ValueError(f"batch state papers must be a list: {batch_state_path}")
+    result: dict[str, dict[str, Any]] = {}
+    for paper in papers:
+        paper_id = paper.get("paper_id") if isinstance(paper, dict) else None
+        if isinstance(paper_id, str):
+            status = paper.get("status")
+            if isinstance(status, str):
+                validate_status(status)
+            result[paper_id] = paper
+    return payload, result
+
+
+def manifest_path(paper: dict[str, Any], key: str, fallback: Path) -> Path:
+    value = paper.get(key)
+    if isinstance(value, str) and value:
+        return Path(value)
+    return fallback
+
+
+def atomic_copy(source_json: Path, dest_json: Path) -> None:
+    dest_json.parent.mkdir(parents=True, exist_ok=True)
+    tmp_path = dest_json.with_name(f".{dest_json.name}.tmp-{os.getpid()}")
+    try:
+        shutil.copy2(source_json, tmp_path)
+        os.replace(tmp_path, dest_json)
+    finally:
+        if tmp_path.exists():
+            tmp_path.unlink()
 
 
 def publish_one(
@@ -109,8 +146,7 @@ def publish_one(
     if errors:
         return False, "; ".join(errors)
 
-    dest_json.parent.mkdir(parents=True, exist_ok=True)
-    shutil.copy2(source_json, dest_json)
+    atomic_copy(source_json, dest_json)
     return True, "published"
 
 
@@ -152,7 +188,13 @@ def main() -> int:
         return 1
 
     manifest = read_json(args.batch_manifest)
+    if not isinstance(manifest, dict):
+        print(f"[FAIL] batch manifest must contain a JSON object: {args.batch_manifest}")
+        return 1
     papers = manifest.get("papers", [])
+    if not isinstance(papers, list):
+        print(f"[FAIL] batch manifest papers must be a list: {args.batch_manifest}")
+        return 1
     requested_ids = set(args.paper_ids or [])
     if requested_ids:
         available_ids = {paper["paper_id"] for paper in papers}
@@ -161,6 +203,29 @@ def main() -> int:
             print(f"[FAIL] Unknown paper_ids in --paper-ids: {', '.join(missing_ids)}")
             return 1
         papers = [paper for paper in papers if paper["paper_id"] in requested_ids]
+
+    batch_state_payload: dict[str, Any] | None = None
+    if args.batch_state:
+        try:
+            batch_state_payload, state_by_id = read_batch_state(args.batch_state)
+        except ValueError as exc:
+            print(f"[FAIL] {exc}")
+            return 1
+        before_count = len(papers)
+        not_ready = [
+            paper
+            for paper in papers
+            if state_by_id.get(paper.get("paper_id"), {}).get("status") != READY_FOR_PUBLICATION_STATUS
+        ]
+        not_ready_ids = {paper.get("paper_id") for paper in not_ready}
+        if requested_ids and not_ready:
+            id_list = ", ".join(sorted(str(paper_id) for paper_id in not_ready_ids))
+            print(f"[FAIL] Requested papers are not {READY_FOR_PUBLICATION_STATUS}: {id_list}")
+            return 1
+        papers = [paper for paper in papers if paper.get("paper_id") not in not_ready_ids]
+        skipped_count = before_count - len(papers)
+        if skipped_count:
+            print(f"[INFO] Skipped {skipped_count} papers not {READY_FOR_PUBLICATION_STATUS}.")
 
     publish_summary = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
@@ -173,8 +238,16 @@ def main() -> int:
     for paper in papers:
         paper_id = paper["paper_id"]
         expect_count = paper.get("expected_specimen_count")
-        source_json = args.tmp_root / paper_id / f"{paper_id}.json"
-        dest_json = args.output_dir / f"{paper_id}.json"
+        source_json = manifest_path(
+            paper,
+            "worker_output_json_path",
+            args.tmp_root / paper_id / f"{paper_id}.json",
+        )
+        dest_json = manifest_path(
+            paper,
+            "final_output_json_path",
+            args.output_dir / f"{paper_id}.json",
+        )
         overwritten = dest_json.exists()
         ok, message = publish_one(
             source_json=source_json,
@@ -194,14 +267,14 @@ def main() -> int:
         }
         append_jsonl(args.publish_log, log_item)
         publish_summary["items"].append(log_item)
-        if args.batch_state:
+        if batch_state_payload is not None:
             try:
-                update_batch_state(
-                    batch_state_path=args.batch_state,
+                apply_batch_state_update(
+                    batch_state_payload=batch_state_payload,
                     paper_id=paper_id,
                     published=ok,
                     validated=ok,
-                    status="published" if ok else "publish_failed",
+                    status=PUBLISHED_STATUS if ok else PUBLISH_FAILED_STATUS,
                     last_error=None if ok else message,
                 )
             except ValueError as exc:
@@ -214,6 +287,8 @@ def main() -> int:
             publish_summary["failed"] += 1
             print(f"[FAIL] {paper_id}: {message}")
 
+    if batch_state_payload is not None:
+        atomic_write_json(args.batch_state, batch_state_payload)
     write_json(args.publish_log.with_suffix(".summary.json"), publish_summary)
     print(
         f"[INFO] Published={publish_summary['published']} Failed={publish_summary['failed']} "
