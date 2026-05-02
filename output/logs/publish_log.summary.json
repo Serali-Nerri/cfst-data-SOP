@@ -1,96 +1,17 @@
 {
-  "generated_at": "2026-05-02T05:16:01.827550+00:00",
-  "requested_paper_ids": null,
-  "published": 10,
+  "generated_at": "2026-05-02T09:12:07.108636+00:00",
+  "requested_paper_ids": [
+    "A1-9"
+  ],
+  "published": 1,
   "failed": 0,
   "items": [
     {
-      "timestamp": "2026-05-02T05:16:01.833482+00:00",
-      "paper_id": "A1-1",
-      "source_path": "output/tmp/A1-1/A1-1.json",
-      "destination_path": "output/output/A1-1.json",
-      "overwritten": false,
-      "published": true,
-      "message": "published"
-    },
-    {
-      "timestamp": "2026-05-02T05:16:01.835852+00:00",
-      "paper_id": "A1-2",
-      "source_path": "output/tmp/A1-2/A1-2.json",
-      "destination_path": "output/output/A1-2.json",
-      "overwritten": false,
-      "published": true,
-      "message": "published"
-    },
-    {
-      "timestamp": "2026-05-02T05:16:01.838048+00:00",
-      "paper_id": "A1-3",
-      "source_path": "output/tmp/A1-3/A1-3.json",
-      "destination_path": "output/output/A1-3.json",
-      "overwritten": false,
-      "published": true,
-      "message": "published"
-    },
-    {
-      "timestamp": "2026-05-02T05:16:01.840557+00:00",
-      "paper_id": "A1-4",
-      "source_path": "output/tmp/A1-4/A1-4.json",
-      "destination_path": "output/output/A1-4.json",
-      "overwritten": false,
-      "published": true,
-      "message": "published"
-    },
-    {
-      "timestamp": "2026-05-02T05:16:01.843144+00:00",
-      "paper_id": "A1-5",
-      "source_path": "output/tmp/A1-5/A1-5.json",
-      "destination_path": "output/output/A1-5.json",
-      "overwritten": false,
-      "published": true,
-      "message": "published"
-    },
-    {
-      "timestamp": "2026-05-02T05:16:01.845683+00:00",
-      "paper_id": "A1-6",
-      "source_path": "output/tmp/A1-6/A1-6.json",
-      "destination_path": "output/output/A1-6.json",
-      "overwritten": false,
-      "published": true,
-      "message": "published"
-    },
-    {
-      "timestamp": "2026-05-02T05:16:01.849766+00:00",
-      "paper_id": "A1-7",
-      "source_path": "output/tmp/A1-7/A1-7.json",
-      "destination_path": "output/output/A1-7.json",
-      "overwritten": false,
-      "published": true,
-      "message": "published"
-    },
-    {
-      "timestamp": "2026-05-02T05:16:01.851107+00:00",
-      "paper_id": "A1-8",
-      "source_path": "output/tmp/A1-8/A1-8.json",
-      "destination_path": "output/output/A1-8.json",
-      "overwritten": false,
-      "published": true,
-      "message": "published"
-    },
-    {
-      "timestamp": "2026-05-02T05:16:01.852546+00:00",
+      "timestamp": "2026-05-02T09:12:07.315991+00:00",
       "paper_id": "A1-9",
-      "source_path": "output/tmp/A1-9/A1-9.json",
+      "source_path": "output/tmp_reextract_20260502-165510/A1-9/A1-9.json",
       "destination_path": "output/output/A1-9.json",
-      "overwritten": false,
-      "published": true,
-      "message": "published"
-    },
-    {
-      "timestamp": "2026-05-02T05:16:01.856386+00:00",
-      "paper_id": "A1-10",
-      "source_path": "output/tmp/A1-10/A1-10.json",
-      "destination_path": "output/output/A1-10.json",
-      "overwritten": false,
+      "overwritten": true,
       "published": true,
       "message": "published"
     }

@@ -8,3 +8,4 @@
 {"timestamp": "2026-05-02T05:16:01.851107+00:00", "paper_id": "A1-8", "source_path": "output/tmp/A1-8/A1-8.json", "destination_path": "output/output/A1-8.json", "overwritten": false, "published": true, "message": "published"}
 {"timestamp": "2026-05-02T05:16:01.852546+00:00", "paper_id": "A1-9", "source_path": "output/tmp/A1-9/A1-9.json", "destination_path": "output/output/A1-9.json", "overwritten": false, "published": true, "message": "published"}
 {"timestamp": "2026-05-02T05:16:01.856386+00:00", "paper_id": "A1-10", "source_path": "output/tmp/A1-10/A1-10.json", "destination_path": "output/output/A1-10.json", "overwritten": false, "published": true, "message": "published"}
+{"timestamp": "2026-05-02T09:12:07.315991+00:00", "paper_id": "A1-9", "source_path": "output/tmp_reextract_20260502-165510/A1-9/A1-9.json", "destination_path": "output/output/A1-9.json", "overwritten": true, "published": true, "message": "published"}

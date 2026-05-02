@@ -702,6 +702,23 @@ def validate_semantics(
     return ctx.errors, ctx.warnings, total
 
 
+def validate_payload(
+    payload: Any,
+    expect_valid: bool | None,
+    strict_rounding: bool,
+    expect_count: int | None,
+) -> tuple[list[str], list[str], int]:
+    """Validate payload through the same schema and semantic checks as the CLI."""
+    schema_errors = validate_schema(payload)
+    semantic_errors, warnings, total = validate_semantics(
+        payload,
+        expect_valid,
+        strict_rounding,
+        expect_count,
+    )
+    return schema_errors + semantic_errors, warnings, total
+
+
 def main() -> int:
     _assert_sandbox()
     parser = argparse.ArgumentParser(description="Validate single-paper CFST extraction JSON 2.0.0-draft. Requires CFST_SANDBOX=1.")
