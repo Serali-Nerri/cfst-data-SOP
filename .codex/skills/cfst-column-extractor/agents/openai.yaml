@@ -1,0 +1,4 @@
+interface:
+  display_name: "CFST Column Extractor"
+  short_description: "Extract CFST column capacity JSON"
+  default_prompt: "Use $cfst-column-extractor to extract all CFST column ultimate load-capacity data from one paper into schema 2.0.0-draft JSON, defaulting to rawdata/full.md with referenced images and PDF fallback."

@@ -1,0 +1,493 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "cfst-extraction-schema.json",
+  "title": "CFST Column Ultimate Load Capacity Extraction Schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "paper",
+    "Group_A",
+    "Group_B",
+    "Group_C",
+    "Group_D"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "2.0.0-draft"
+    },
+    "paper": {
+      "$ref": "#/$defs/paper"
+    },
+    "Group_A": {
+      "$ref": "#/$defs/group"
+    },
+    "Group_B": {
+      "$ref": "#/$defs/group"
+    },
+    "Group_C": {
+      "$ref": "#/$defs/group"
+    },
+    "Group_D": {
+      "$ref": "#/$defs/group"
+    }
+  },
+  "$defs": {
+    "paper": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ref_info",
+        "validity",
+        "data_sources",
+        "defaults",
+        "default_consistency",
+        "default_notes",
+        "notes"
+      ],
+      "properties": {
+        "ref_info": {
+          "$ref": "#/$defs/ref_info"
+        },
+        "validity": {
+          "$ref": "#/$defs/validity"
+        },
+        "data_sources": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/data_source"
+          },
+          "description": "Paper-level source table/figure/section summaries. Do not put source information under groups or specimens."
+        },
+        "defaults": {
+          "$ref": "#/$defs/paper_defaults",
+          "description": "Paper-level defaults. Do not include r_ratio, e1, or e2 here."
+        },
+        "default_consistency": {
+          "$ref": "#/$defs/default_consistency"
+        },
+        "default_notes": {
+          "$ref": "#/$defs/default_notes"
+        },
+        "notes": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "ref_info": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "title",
+        "authors",
+        "journal",
+        "year",
+        "doi",
+        "language"
+      ],
+      "properties": {
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "authors": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "journal": {
+          "type": "string",
+          "minLength": 1
+        },
+        "year": {
+          "type": "integer",
+          "minimum": 1800,
+          "maximum": 2100
+        },
+        "doi": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "language": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Use common language tags such as zh, en, ja, ko, de, fr, or null when unknown."
+        }
+      }
+    },
+    "validity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "is_valid",
+        "reason"
+      ],
+      "properties": {
+        "is_valid": {
+          "type": "boolean"
+        },
+        "reason": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Required when is_valid is false; briefly state why no in-scope data can be extracted."
+        }
+      }
+    },
+    "data_source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_id",
+        "type",
+        "name",
+        "description"
+      ],
+      "properties": {
+        "source_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "table",
+            "figure",
+            "section",
+            "text",
+            "other"
+          ]
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "paper_defaults": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "fco": {
+          "$ref": "#/$defs/positive_number"
+        },
+        "fc_type": {
+          "$ref": "#/$defs/fc_type"
+        },
+        "loading_mode": {
+          "$ref": "#/$defs/loading_mode"
+        },
+        "condition": {
+          "$ref": "#/$defs/condition"
+        },
+        "material": {
+          "$ref": "#/$defs/material"
+        }
+      }
+    },
+    "default_consistency": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "fco",
+        "fc_type",
+        "loading_mode",
+        "condition",
+        "material"
+      ],
+      "properties": {
+        "fco": {
+          "type": "boolean"
+        },
+        "fc_type": {
+          "type": "boolean"
+        },
+        "loading_mode": {
+          "type": "boolean"
+        },
+        "condition": {
+          "type": "boolean"
+        },
+        "material": {
+          "type": "boolean"
+        }
+      }
+    },
+    "default_notes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "fco",
+        "fc_type",
+        "loading_mode",
+        "condition",
+        "material"
+      ],
+      "properties": {
+        "fco": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "fc_type": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "loading_mode": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "condition": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "material": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "group": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "shared",
+        "specimens",
+        "note"
+      ],
+      "properties": {
+        "shared": {
+          "$ref": "#/$defs/shared_data",
+          "description": "Values shared by every specimen in this group."
+        },
+        "specimens": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/specimen"
+          }
+        },
+        "note": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Group-level note for local data exceptions such as rounded-corner square/rectangular sections. Do not put source details, quotes, or derivation basis here."
+        }
+      }
+    },
+    "shared_data": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "fco": {
+          "$ref": "#/$defs/positive_number"
+        },
+        "fc_type": {
+          "$ref": "#/$defs/fc_type"
+        },
+        "fy": {
+          "$ref": "#/$defs/positive_number"
+        },
+        "r_ratio": {
+          "$ref": "#/$defs/percent_number"
+        },
+        "b": {
+          "$ref": "#/$defs/positive_number"
+        },
+        "h": {
+          "$ref": "#/$defs/positive_number"
+        },
+        "t": {
+          "$ref": "#/$defs/positive_number"
+        },
+        "r0": {
+          "$ref": "#/$defs/nonnegative_number"
+        },
+        "L": {
+          "$ref": "#/$defs/positive_number"
+        },
+        "e1": {
+          "type": "number"
+        },
+        "e2": {
+          "type": "number"
+        },
+        "n_exp": {
+          "$ref": "#/$defs/positive_number"
+        },
+        "loading_mode": {
+          "$ref": "#/$defs/loading_mode"
+        },
+        "condition": {
+          "$ref": "#/$defs/condition"
+        },
+        "material": {
+          "$ref": "#/$defs/material"
+        }
+      }
+    },
+    "specimen": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "specimen_label"
+      ],
+      "properties": {
+        "specimen_label": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Specimen label exactly as given in the source."
+        },
+        "fco": {
+          "$ref": "#/$defs/positive_number"
+        },
+        "fc_type": {
+          "$ref": "#/$defs/fc_type"
+        },
+        "fy": {
+          "$ref": "#/$defs/positive_number"
+        },
+        "r_ratio": {
+          "$ref": "#/$defs/percent_number"
+        },
+        "b": {
+          "$ref": "#/$defs/positive_number"
+        },
+        "h": {
+          "$ref": "#/$defs/positive_number"
+        },
+        "t": {
+          "$ref": "#/$defs/positive_number"
+        },
+        "r0": {
+          "$ref": "#/$defs/nonnegative_number"
+        },
+        "L": {
+          "$ref": "#/$defs/positive_number"
+        },
+        "e1": {
+          "type": "number"
+        },
+        "e2": {
+          "type": "number"
+        },
+        "loading_mode": {
+          "$ref": "#/$defs/loading_mode"
+        },
+        "condition": {
+          "$ref": "#/$defs/condition"
+        },
+        "material": {
+          "$ref": "#/$defs/material"
+        },
+        "n_exp": {
+          "$ref": "#/$defs/positive_number"
+        },
+        "note": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Required for specimen-specific overrides of paper defaults or rounded-corner square/rectangular sections. Do not put source details, quotes, or derivation basis here."
+        }
+      }
+    },
+    "material": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "steel",
+        "concrete"
+      ],
+      "properties": {
+        "steel": {
+          "type": "string",
+          "enum": [
+            "carbon_steel",
+            "stainless_steel",
+            "other"
+          ]
+        },
+        "concrete": {
+          "type": "string",
+          "enum": [
+            "normal",
+            "UHPC",
+            "recycled_concrete",
+            "other"
+          ]
+        }
+      }
+    },
+    "loading_mode": {
+      "type": "string",
+      "enum": [
+        "monotonic",
+        "cyclic",
+        "sustained",
+        "dynamic",
+        "thermal",
+        "other"
+      ]
+    },
+    "condition": {
+      "type": "string",
+      "enum": [
+        "normal",
+        "corrosion",
+        "freeze_thaw",
+        "thermal",
+        "long_term",
+        "defect",
+        "damage",
+        "strengthened",
+        "other"
+      ]
+    },
+    "fc_type": {
+      "type": "string",
+      "pattern": "^(cube|cube_[0-9]+|cylinder|cylinder_[0-9]+x[0-9]+|prism|prism_[0-9]+x[0-9]+x[0-9]+|unknown|[A-Za-z0-9_\\-x]+)$",
+      "not": {
+        "pattern": "^([Ff]'?[Cc]|[Ff][Cc]'|[Ff][Cc][Uu]|[Ff][Cc][Kk]|[Ff][Cc][Mm]|[Ff][Cc][Dd])$"
+      }
+    },
+    "positive_number": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "nonnegative_number": {
+      "type": "number",
+      "minimum": 0
+    },
+    "percent_number": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100
+    }
+  }
+}
