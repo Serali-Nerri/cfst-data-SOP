@@ -229,8 +229,8 @@ def _validate_string_list(value: Any, tag: str, ctx: ValidationContext, *, requi
     for idx, item in enumerate(value):
         if not isinstance(item, str):
             ctx.error(f"`{tag}[{idx}]` must be string.")
-        elif item != item.strip() or not item.strip():
-            ctx.error(f"`{tag}[{idx}]` must be a non-empty trimmed string.")
+        elif item != item.strip() or not _nonempty_string(item):
+            ctx.error(f"`{tag}[{idx}]` must be a non-empty trimmed single-line string.")
 
 
 def _validate_number(

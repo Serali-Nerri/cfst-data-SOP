@@ -1,16 +1,18 @@
 # CFST JSON Output Contract
 
-This file is the authoritative human-readable contract for writing CFST
-extraction JSON. The validator applies a bundled machine schema internally for
-static structure checks, but normal extraction should rely on this contract.
-
-A JSON file that follows every REQUIRED rule in this document is expected to
-pass `scripts/validate_single_output.py --strict-rounding`. The validator is an
-execution tool, not an additional policy source. If the validator fails on a
-rule not documented here, report a documentation/validator mismatch.
-
 Warnings alone are not validation failure, but agents should avoid documented
 warnings when the paper supports a cleaner value.
+
+Documented validator warnings include:
+
+- `paper.data_sources` is empty for a valid paper.
+- A specimen repeats the same value already supplied by its group `shared`
+  object.
+- A `Group_B` row has `b == h`; verify whether it belongs in `Group_A`.
+- `material`, `loading_mode`, or `condition` uses `other` without an applicable
+  explanatory note.
+- Numeric values are not rounded to 0.001 when validation is run without
+  `--strict-rounding`; under `--strict-rounding`, this is an error.
 
 ## Contents
 
@@ -92,7 +94,22 @@ this contract and the validator.
   },
   "Group_A": {"shared": {}, "specimens": [], "note": null},
   "Group_B": {"shared": {}, "specimens": [], "note": null},
-  "Group_C": {"shared": {}, "specimens": [], "note": null},
+  "Group_C": {
+    "shared": {"r_ratio": 0, "e1": 0, "e2": 0},
+    "specimens": [
+      {
+        "specimen_label": "C1",
+        "fy": 345,
+        "b": 150,
+        "h": 150,
+        "t": 5,
+        "r0": 75,
+        "L": 450,
+        "n_exp": 1200
+      }
+    ],
+    "note": null
+  },
   "Group_D": {"shared": {}, "specimens": [], "note": null}
 }
 ```
@@ -238,12 +255,12 @@ Top-level object:
 
 `paper.ref_info`:
 
-- `title` is required and MUST be a non-empty single-line string. It MUST NOT
-  be null.
+- `title` is required and MUST be a non-empty trimmed single-line string. It
+  MUST NOT be null.
 - `authors` is required and MUST be a non-empty list of non-empty trimmed
-  strings. It MUST NOT be empty.
-- `journal` is required and MUST be a non-empty single-line string. It MUST NOT
-  be null.
+  single-line strings. It MUST NOT be empty.
+- `journal` is required and MUST be a non-empty trimmed single-line string. It
+  MUST NOT be null.
 - `year` is required and MUST be an integer from 1800 to 2100. It MUST NOT be
   null.
 - `doi` and `language` are required and MUST be strings or null.
@@ -258,7 +275,7 @@ Top-level object:
 
 - MUST be a list.
 - Each item MUST have non-empty `source_id`, `type`, `name`, and `description`
-  strings.
+  single-line strings.
 - `source_id` values MUST be unique.
 
 `paper.defaults`:
@@ -273,6 +290,8 @@ Top-level object:
 - Each value MUST be boolean.
 - `true` means the corresponding `paper.defaults` value applies to all retained
   specimens.
+- `true` requires the corresponding value to exist in `paper.defaults` for
+  valid papers.
 - `false` means at least one retained specimen or group differs from the
   default; lower-level fields may override it.
 
@@ -451,6 +470,8 @@ Each specimen MUST be placed in exactly one group.
 - Non-rounded square sections MUST use `r0 = 0`.
 - Rounded-corner square sections MUST use `r0 > 0` and MUST have a group
   `note` or specimen `note` that states the section has rounded corners.
+  Use wording such as `rounded-corner`, `corner radius`, or `圆角` so the
+  validator can detect it.
 - If `r0 > 0`, `r0` MUST be smaller than `h / 2`.
 
 ### `Group_B`
@@ -461,6 +482,8 @@ Each specimen MUST be placed in exactly one group.
 - If `b == h`, the validator warns because the row may belong in `Group_A`.
 - Rounded-corner rectangular sections MUST use `r0 > 0` and MUST have a group
   `note` or specimen `note` that states the section has rounded corners.
+  Use wording such as `rounded-corner`, `corner radius`, or `圆角` so the
+  validator can detect it.
 - If `r0 > 0`, `r0` MUST be smaller than `h / 2`.
 
 ### `Group_C`

@@ -5,7 +5,7 @@ belongs in `../SKILL.md`; JSON shape and required fields belong in
 `JSON_contract.md`.
 
 The extraction target is **all CFST column ultimate load-capacity data**
-recoverable from the paper. Do not apply an ordinary-CFST eligibility filter.
+recoverable from the paper. 
 Fire, corrosion, freeze-thaw, long-term loading, defects, damage,
 strengthening, cyclic loading, dynamic loading, high temperature, stainless
 steel, UHPC, recycled concrete, and other special cases are included when the
@@ -69,7 +69,10 @@ Exclude before extraction:
 - FE-only, theory-only, review-only, or numerical-parametric rows without
   physical specimen capacity data
 - papers where CFST columns appear only as background and no separable CFST
-  column ultimate-capacity data can be recovered
+  column ultimate-capacity data can be recovered.
+-  intentionally hollow-core CFST-type specimens, including double-skin,
+    double-tube, or hollow-sandwich CFST columns, even when `n_exp` is reported.
+
 
 A paper is `is_valid=true` when at least one in-scope CFST column specimen row
 can be extracted. A paper is invalid only when no in-scope CFST column

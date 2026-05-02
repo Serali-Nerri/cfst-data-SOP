@@ -1,6 +1,6 @@
 ---
 name: cfst-column-extractor
-description: Extract all experimental CFST column ultimate load-capacity data from one paper into standardized schema 2.0.0-draft JSON. Use when Codex needs to extract, repair, validate, or review a single paper's CFST column capacity data from rawdata/full.md first, referenced images on demand, and PDF fallback using the extraction rules, concrete-strength basis rules, section-shape reference image, JSON contract, and validator.
+description: Extract all experimental CFST column ultimate load-capacity data from one paper into standardized schema 2.0.0-draft JSON. Use when Codex needs to extract, repair, validate, or review a single paper's CFST column capacity data from full.md first, referenced images on demand, and PDF fallback using the extraction rules, concrete-strength basis rules, section-shape reference image, JSON contract, and validator.
 ---
 
 # CFST Column Extractor
@@ -18,9 +18,7 @@ Treat the parent worker brief, this file, and these resources as the complete on
 - `scripts/safe_calc.py`: sandbox-only arithmetic helper for conversions and derived values
 - `scripts/validate_single_output.py`: sandbox-only execution tool for validating the final JSON
 
-Do not apply an ordinary-CFST filter. Include non-ordinary CFST column rows when they satisfy `references/extraction-rules.md`.
-
-Use `references/JSON_contract.md` to decide how to write JSON. Do not inspect `scripts/validate_single_output.py` to infer JSON authoring rules unless explicitly debugging a validator implementation failure. If validation fails because of a rule not documented in `JSON_contract.md`, report the documentation/validator mismatch instead of treating the validator source as extraction policy.
+Use `references/JSON_contract.md` to decide how to write JSON. Do not inspect `scripts/validate_single_output.py` to infer JSON authoring rules unless explicitly debugging a validator implementation failure.
 
 ## Source Trust And Fallback Priority
 
