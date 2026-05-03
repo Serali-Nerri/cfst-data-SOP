@@ -1,6 +1,6 @@
 ---
 name: cfst-orchestrator
-description: Orchestrate multi-paper CFST column extraction batches from `Pending/` paper packages using parent-built worker job specs, isolated per-paper workspaces, sandboxed validation, retry handling, and publication. Use when Codex needs to prepare Pending rawdata packages, build batch manifests, generate one-paper worker briefs for `cfst-column-extractor`, monitor/retry workers, publish validated outputs, or report extraction progress.
+description: Use only when explicitly specified by the user; orchestrates CFST batch extraction, publication, and optional CSV export.
 ---
 
 # CFST Orchestrator
@@ -81,7 +81,9 @@ python .codex/skills/cfst-orchestrator/scripts/cleanup_worker_workspace.py \
 
 8. Publish validated outputs only after prepared workers have finished or exhausted retry, then run checkpoints only if repository policy requires them.
 
-9. Report papers skipped before spawn, invalid parent-owned input packages, papers failed after retry, and papers published to `output/output/`.
+9. After publication, ask the user whether to export the published JSON outputs to CSV unless the original user request already explicitly asked for CSV export. If yes, use `Optional CSV Export` below.
+
+10. Report papers skipped before spawn, invalid parent-owned input packages, papers failed after retry, papers published to `output/output/`, and any CSV path generated.
 
 ## Worker Interface
 
@@ -136,3 +138,27 @@ python .codex/skills/cfst-orchestrator/scripts/checkpoint_output_commits.py \
   --checkpoint-count <published_plus_failed_count> \
   --output-dir output/output
 ```
+
+## Optional CSV Export
+
+Run this only after validated JSON files have been published, and only after the user confirms CSV export or explicitly requested it up front.
+
+```bash
+python .codex/skills/cfst-orchestrator/scripts/export_json_outputs_to_csv.py \
+  --input-dir output/output \
+  --output-csv output/output/cfst_specimens.csv
+```
+
+The CSV writer exports one row per specimen and resolves effective specimen data with the JSON contract inheritance order: `paper.defaults`, then `Group_X.shared`, then the specimen object. The default columns are:
+
+```text
+Ref.info., fco (MPa), fc_type, Specimen, fy (MPa), fcy150(Mpa), R (%), b (mm), h (mm), t (mm), r0 (mm), L (mm), e1 (mm), e2 (mm), Nexp (kN), Group, Material.steel, Material.concrete, loading mode, condition
+```
+
+CSV field rules:
+
+- `Ref.info.` is `first author,title,journal,year`.
+- `fcy150(Mpa)` is intentionally blank for later normalized concrete-strength values.
+- `Group` is written as `A`, `B`, `C`, or `D`.
+- `Material.steel`, `Material.concrete`, `loading mode`, and `condition` use the effective inherited value exactly as stored.
+- The default CSV encoding is `utf-8-sig` so Chinese bibliographic text opens cleanly in common spreadsheet tools.

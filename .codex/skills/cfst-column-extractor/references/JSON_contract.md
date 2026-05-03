@@ -546,9 +546,8 @@ strength basis and match the validator pattern.
 - `recycled_concrete`
 - `other`
 
-When a material value is `other`, explain it in the nearest applicable `note`
-field: specimen note for specimen-specific values, group note for group-shared
-values, or paper notes for paper defaults.
+When a material value is `other`, explain it using the note placement rule under
+Paper-Level Source Notes.
 
 `loading_mode` values:
 
@@ -559,7 +558,8 @@ values, or paper notes for paper defaults.
 - `thermal`
 - `other`
 
-When `loading_mode = "other"`, explain it in the nearest applicable `note`.
+When `loading_mode = "other"`, explain it using the note placement rule under
+Paper-Level Source Notes.
 
 `condition` values:
 
@@ -573,7 +573,8 @@ When `loading_mode = "other"`, explain it in the nearest applicable `note`.
 - `strengthened`
 - `other`
 
-When `condition = "other"`, explain it in the nearest applicable `note`.
+When `condition = "other"`, explain it using the note placement rule under
+Paper-Level Source Notes.
 
 ## Paper-Level Source Notes
 
@@ -606,6 +607,12 @@ defaults and their derivation basis:
   "material": "Source S1 reports carbon-steel tubes and normal concrete."
 }
 ```
+
+Place non-source explanatory notes at the same inheritance level as the value
+they explain: `paper.default_notes.<field>` for paper defaults, `Group_X.note`
+for group-shared values, and specimen `note` for specimen fields. Use
+`paper.notes` only for paper-wide context not tied to one field, group, or
+specimen.
 
 Do not quote long passages. Short table or section descriptions are enough.
 Group and specimen notes are only for local data exceptions, such as rounded

@@ -82,8 +82,8 @@ Grouped average ultimate capacities are usable when the paper explicitly
 defines the repeated-specimen group membership, or gives enough specimen-count /
 parameter-set mapping to assign the same reported average to each member
 specimen row without fabricating group composition. In that case, store the same
-`n_exp` on each member row and explain the reported average in the nearest
-applicable `note` field. If a paper reports only grouped averages but the
+`n_exp` on each member row and explain the reported average using the note
+placement rule in section 9. If a paper reports only grouped averages but the
 member-to-row mapping is not defensibly recoverable, do not fabricate individual
 specimen rows.
 
@@ -247,8 +247,8 @@ sign records direction: `e1` and `e2` with the same sign act in the same
 direction; opposite signs act in opposite directions. If the paper reports only
 unsigned eccentricity magnitudes, store non-negative values.
 
-| Loading mode | `e1` | `e2` | Meaning |
-| ------------ | ---- | ---- | ------- |
+| Eccentricity pattern | `e1` | `e2` | Meaning |
+| -------------------- | ---- | ---- | ------- |
 | Axial loading | 0 | 0 | Load passes through the section centroid |
 | Equal-end eccentric loading | e | e | Upper and lower eccentricities are equal |
 | Unequal-end eccentric loading | e1 | e2 | Upper and lower eccentricities are unequal |
@@ -274,8 +274,8 @@ unsigned eccentricity magnitudes, store non-negative values.
 - `recycled_concrete`
 - `other`
 
-When a material value is `other`, briefly explain it in the nearest applicable
-`note` field.
+When a material value is `other`, briefly explain it using the note placement
+rule in section 9.
 
 When material is shared by all retained specimens, write it in `paper.defaults`
 and set `paper.default_consistency.material=true`. If it varies, set
@@ -283,6 +283,9 @@ and set `paper.default_consistency.material=true`. If it varies, set
 `Group_X.shared` or specimen fields with notes for special cases.
 
 ## 7. Loading Mode Rules
+
+`loading_mode` is a coarse category for the primary loading or action regime
+associated with the reported ultimate load.
 
 `loading_mode` values:
 
@@ -293,8 +296,8 @@ and set `paper.default_consistency.material=true`. If it varies, set
 - `thermal`: high temperature, fire, or post-fire residual
 - `other`: other loading type
 
-When `loading_mode = "other"`, briefly explain it in the nearest applicable
-`note` field.
+When `loading_mode = "other"`, briefly explain it using the note placement rule
+in section 9.
 
 When loading mode is shared by all retained specimens, write it in
 `paper.defaults` and set `paper.default_consistency.loading_mode=true`. If it
@@ -302,6 +305,9 @@ varies, set `paper.default_consistency.loading_mode=false` and write overrides
 in `Group_X.shared` or specimen fields with notes for special cases.
 
 ## 8. Condition Rules
+
+`condition` is a coarse category for the specimen's dominant state, treatment,
+deterioration, damage, strengthening, or environmental exposure.
 
 `condition` values:
 
@@ -322,8 +328,11 @@ in `Group_X.shared` or specimen fields with notes for special cases.
   strengthening, concrete/UHPC jacketing, post-corrosion repair, etc.
 - `other`: other special condition
 
-When `condition = "other"`, briefly explain it in the nearest applicable `note`
-field.
+For multi-factor cases, choose the dominant category for coarse normalization
+and explain secondary factors using the note placement rule in section 9.
+
+When `condition = "other"`, briefly explain it using the note placement rule in
+section 9.
 
 When condition is shared by all retained specimens, write it in
 `paper.defaults` and set `paper.default_consistency.condition=true`. If it
@@ -342,6 +351,12 @@ that support the extraction overall. Keep descriptions short.
 
 Use `paper.default_notes` to describe the paper-level basis for `fco`,
 `fc_type`, `loading_mode`, `condition`, and `material`.
+
+Place non-source explanatory notes at the same inheritance level as the value
+they explain: `paper.default_notes.<field>` for paper defaults, `Group_X.note`
+for group-shared values, and specimen `note` for specimen fields. Use
+`paper.notes` only for paper-wide context not tied to one field, group, or
+specimen.
 
 Use group or specimen `note` only for local data exceptions, such as
 rounded-corner square/rectangular sections, grouped average capacities, or

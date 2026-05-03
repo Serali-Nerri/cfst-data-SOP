@@ -1,4 +1,4 @@
 interface:
   display_name: "CFST Orchestrator"
-  short_description: "Orchestrate Pending-package CFST extraction"
-  default_prompt: "Use $cfst-orchestrator to prepare Pending paper packages, build package-first batch manifests, generate per-paper worker_job_spec.json and worker_brief.md files for $cfst-column-extractor, launch isolated workers, track retries/state, and publish validated schema 2.0.0-draft CFST column outputs."
+  short_description: "Orchestrate CFST extraction and CSV export"
+  default_prompt: "Use $cfst-orchestrator to prepare Pending paper packages, build package-first batch manifests, generate per-paper worker_job_spec.json and worker_brief.md files for $cfst-column-extractor, launch isolated workers, track retries/state, publish validated schema 2.0.0-draft CFST column outputs, and optionally export published JSON specimen rows to CSV after user confirmation."

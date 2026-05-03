@@ -1,6 +1,6 @@
 ---
 name: cfst-column-extractor
-description: Extract all experimental CFST column ultimate load-capacity data from one caller-provided Pending paper package into standardized schema 2.0.0-draft JSON. Use when Codex needs to extract, repair, validate, or review a single paper's CFST column capacity data from prepared full.md first, referenced images on demand, and owned PDF fallback using the extraction rules, concrete-strength basis rules, section-shape reference image, JSON contract, and caller-provided validation command.
+description: Extract all experimental CFST column ultimate load-capacity data from one caller-provided Pending paper package into standardized schema 2.0.0-draft JSON.
 ---
 
 # CFST Column Extractor
