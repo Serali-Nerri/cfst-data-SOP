@@ -53,7 +53,7 @@ MATERIAL_KEYS = {"steel", "concrete"}
 
 SOURCE_TYPES = {"table", "figure", "section", "text", "other"}
 STEEL_TYPES = {"carbon_steel", "stainless_steel", "other"}
-CONCRETE_TYPES = {"normal", "UHPC", "recycled_concrete", "other"}
+CONCRETE_TYPES = {"normal", "SCC", "UHPC", "UHSC", "recycled_concrete", "other"}
 LOADING_MODE_TYPES = {"monotonic", "cyclic", "sustained", "dynamic", "thermal", "other"}
 CONDITION_TYPES = {
     "normal",
@@ -332,7 +332,14 @@ def _validate_fc_type(value: Any, tag: str, ctx: ValidationContext) -> None:
         ctx.error(f"`{tag}` does not match the validator pattern.")
 
 
-def _validate_material(value: Any, tag: str, ctx: ValidationContext, *, note: Any) -> None:
+def _validate_material(
+    value: Any,
+    tag: str,
+    ctx: ValidationContext,
+    *,
+    note: Any,
+    require_other_note: bool = True,
+) -> None:
     if not isinstance(value, dict):
         ctx.error(f"`{tag}` must be object.")
         return
@@ -343,21 +350,41 @@ def _validate_material(value: Any, tag: str, ctx: ValidationContext, *, note: An
         ctx.error(f"`{tag}.steel` invalid: {steel}.")
     if not isinstance(concrete, str) or concrete not in CONCRETE_TYPES:
         ctx.error(f"`{tag}.concrete` invalid: {concrete}.")
-    if (steel == "other" or concrete == "other") and not _nonempty_string(note):
+    if require_other_note and (steel == "other" or concrete == "other") and not _nonempty_string(note):
         ctx.warning(f"`{tag}` uses `other`; explain it in the nearest applicable note.")
 
 
-def _validate_loading_mode(value: Any, tag: str, ctx: ValidationContext, *, note: Any) -> None:
+def _note_for_field(note: Any, field: str) -> Any:
+    if isinstance(note, dict):
+        return note.get(field)
+    return note
+
+
+def _validate_loading_mode(
+    value: Any,
+    tag: str,
+    ctx: ValidationContext,
+    *,
+    note: Any,
+    require_other_note: bool = True,
+) -> None:
     if not isinstance(value, str) or value not in LOADING_MODE_TYPES:
         ctx.error(f"`{tag}` invalid: {value}.")
-    elif value == "other" and not _nonempty_string(note):
+    elif require_other_note and value == "other" and not _nonempty_string(note):
         ctx.warning(f"`{tag}` is `other`; explain it in the nearest applicable note.")
 
 
-def _validate_condition(value: Any, tag: str, ctx: ValidationContext, *, note: Any) -> None:
+def _validate_condition(
+    value: Any,
+    tag: str,
+    ctx: ValidationContext,
+    *,
+    note: Any,
+    require_other_note: bool = True,
+) -> None:
     if not isinstance(value, str) or value not in CONDITION_TYPES:
         ctx.error(f"`{tag}` invalid: {value}.")
-    elif value == "other" and not _nonempty_string(note):
+    elif require_other_note and value == "other" and not _nonempty_string(note):
         ctx.warning(f"`{tag}` is `other`; explain it in the nearest applicable note.")
 
 
@@ -369,6 +396,7 @@ def _validate_data_fields(
     allowed: set[str],
     required: set[str] | None = None,
     note: Any = None,
+    require_other_notes: bool = True,
 ) -> None:
     if not isinstance(value, dict):
         ctx.error(f"`{tag}` must be object.")
@@ -391,11 +419,29 @@ def _validate_data_fields(
     if "fc_type" in value:
         _validate_fc_type(value["fc_type"], f"{tag}.fc_type", ctx)
     if "loading_mode" in value:
-        _validate_loading_mode(value["loading_mode"], f"{tag}.loading_mode", ctx, note=note)
+        _validate_loading_mode(
+            value["loading_mode"],
+            f"{tag}.loading_mode",
+            ctx,
+            note=_note_for_field(note, "loading_mode"),
+            require_other_note=require_other_notes,
+        )
     if "condition" in value:
-        _validate_condition(value["condition"], f"{tag}.condition", ctx, note=note)
+        _validate_condition(
+            value["condition"],
+            f"{tag}.condition",
+            ctx,
+            note=_note_for_field(note, "condition"),
+            require_other_note=require_other_notes,
+        )
     if "material" in value:
-        _validate_material(value["material"], f"{tag}.material", ctx, note=note)
+        _validate_material(
+            value["material"],
+            f"{tag}.material",
+            ctx,
+            note=_note_for_field(note, "material"),
+            require_other_note=require_other_notes,
+        )
 
 
 def _validate_default_consistency(value: Any, ctx: ValidationContext) -> dict[str, bool]:
@@ -435,12 +481,13 @@ def _validate_paper(value: Any, ctx: ValidationContext) -> tuple[dict[str, Any] 
     if "data_sources" in value:
         _validate_data_sources(value["data_sources"], ctx, is_valid=is_valid)
     if "defaults" in value:
+        default_notes = value.get("default_notes")
         _validate_data_fields(
             value["defaults"],
             "paper.defaults",
             ctx,
             allowed=PAPER_DEFAULT_KEYS,
-            note=value.get("notes"),
+            note=default_notes if isinstance(default_notes, dict) else None,
         )
     consistency = _validate_default_consistency(value.get("default_consistency"), ctx) if "default_consistency" in value else {}
     if "default_notes" in value:
@@ -620,7 +667,14 @@ def _validate_specimen(
     effective = _effective_data(paper, group, specimen)
     effective_tag = f"{tag}.effective_data"
     _require_effective_fields(effective, effective_tag, ctx)
-    _validate_data_fields(effective, effective_tag, ctx, allowed=DATA_KEYS, note=note_for_geometry)
+    _validate_data_fields(
+        effective,
+        effective_tag,
+        ctx,
+        allowed=DATA_KEYS,
+        note=note_for_geometry,
+        require_other_notes=False,
+    )
     _validate_effective_geometry(effective, effective_tag, ctx, group_key=group_key, note=note_for_geometry)
 
 

@@ -270,7 +270,9 @@ unsigned eccentricity magnitudes, store non-negative values.
 `material.concrete` values:
 
 - `normal`
+- `SCC`
 - `UHPC`
+- `UHSC`
 - `recycled_concrete`
 - `other`
 

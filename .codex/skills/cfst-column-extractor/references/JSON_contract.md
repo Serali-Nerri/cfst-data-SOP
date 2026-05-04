@@ -542,7 +542,9 @@ strength basis and match the validator pattern.
 `material.concrete` values:
 
 - `normal`
+- `SCC`
 - `UHPC`
+- `UHSC`
 - `recycled_concrete`
 - `other`
 
@@ -641,7 +643,9 @@ quotes, and conversion/derivation phrases.
 `material.concrete` values:
 
 - `normal`
+- `SCC`
 - `UHPC`
+- `UHSC`
 - `recycled_concrete`
 - `other`
 

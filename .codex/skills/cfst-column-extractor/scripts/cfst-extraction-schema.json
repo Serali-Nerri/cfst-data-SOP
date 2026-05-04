@@ -437,7 +437,9 @@
           "type": "string",
           "enum": [
             "normal",
+            "SCC",
             "UHPC",
+            "UHSC",
             "recycled_concrete",
             "other"
           ]
