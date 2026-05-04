@@ -18,6 +18,8 @@ Treat this file and these resources as the complete one-paper extraction contrac
 - `scripts/safe_calc.py`: sandbox-only arithmetic helper for conversions and derived values
 - `scripts/validate_single_output.py`: sandbox-only execution tool for validating the final JSON
 
+When using `scripts/safe_calc.py`, run it through `sandbox_command_prefix` with `--help` if syntax, supported functions, or examples are needed.
+
 Use `references/JSON_contract.md` to decide how to write JSON. Do not inspect `scripts/validate_single_output.py` to infer JSON authoring rules unless explicitly debugging a validator implementation failure.
 
 ## Source Handling
