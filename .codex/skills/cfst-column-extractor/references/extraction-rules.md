@@ -4,8 +4,8 @@ Use this file as the extraction rule source of truth for one paper. Workflow
 belongs in `../SKILL.md`; JSON shape and required fields belong in
 `JSON_contract.md`.
 
-The extraction target is **all CFST column ultimate load-capacity data**
-recoverable from the paper. 
+The extraction target is **all CFST column full-section compression ultimate
+load-capacity data** recoverable from the paper.
 Fire, corrosion, freeze-thaw, long-term loading, defects, damage,
 strengthening, cyclic loading, dynamic loading, high temperature, stainless
 steel, UHPC, recycled concrete, and other special cases are included when the
@@ -14,8 +14,8 @@ reported.
 
 Section map:
 
-- `## 1. Target Scope`: include all CFST column ultimate-capacity data and
-  exclude non-target tests.
+- `## 1. Target Scope`: include all CFST column full-section compression
+  ultimate load-capacity data and exclude non-target tests.
 - `## 2. Required Parameters`: define the project fields to extract.
 - `## 3. Concrete Strength Rules`: resolve `fco` and `fc_type`.
 - `## 4. Section Shape And Geometry Rules`: resolve `Group_A-D`, `b`, `h`,
@@ -27,70 +27,40 @@ Section map:
 - `## 8. Condition Rules`: normalize pre-test and in-test conditions.
 - `## 9. Source And Numeric Rules`: record paper-level source summaries and
   normalize numbers.
-- `## 10. Invalid Or Failed Extraction`: define invalid papers and processing
-  failures.
+- `## 10. Processing Failure`: define evidence-insufficient failures.
 
 ## 1. Target Scope
 
-Extract only experimental **CFST column ultimate load-capacity data**.
+Extract experimental CFST column rows whose reported `n_exp` is the
+full-section compression ultimate load of a concrete-filled steel tube column.
 
-A specimen row is in scope when all are true:
+Include full-section CFST column, stub-column, short-column, slender-column, and
+long-column rows under axial, eccentric, combined, or other recoverable
+full-section compression. Keep non-ordinary full-section CFST rows; encode
+treatments, damage, exposure, loading history, and materials in the normalized
+fields and notes.
 
-- the tested member itself is a concrete-filled steel tube column, stub column,
-  short column, slender column, or long column
-- the row has an experimental ultimate load capacity, stored as `n_exp`
-- the loading is axial compression, eccentric compression, combined compression
-  with recoverable axial ultimate load, or another column test whose ultimate
-  load capacity can be stored as `n_exp`
-- the required geometry, material, loading, condition, eccentricity, recycled
-  aggregate ratio, and capacity fields are recoverable through the schema
-  inheritance rules
+Exclude:
 
-Do **not** exclude a CFST column row because it is non-ordinary, specially
-treated, conditioned, damaged, strengthened, high-temperature, post-fire,
-cyclic, dynamic, sustained-load, stainless-steel, UHPC, recycled, or otherwise
-outside an ordinary dataset. Capture those differences in `material`,
-`loading_mode`, `condition`, `r_ratio`, specimen/group notes, and paper-level
-source summaries.
+- non-column members or tests: beams, pure bending without recoverable column
+  axial/eccentric capacity, joints, connections, frames/subassemblies without
+  separable column capacity, walls, piers, braces, panels, slabs
+- non-CFST or component-only rows: hollow/bare/empty steel tubes,
+  concrete-only/steel-only controls, rows loaded to failure through only the
+  concrete section or only the steel tube
+- FE-only, theory-only, review-only, or numerical-parametric rows
+- intentionally hollow-core CFST-type specimens: double-skin, double-tube, or
+  hollow-sandwich columns
 
-Exclude before extraction:
-
-- beams or flexural beam tests
-- joints / beam-column joints
-- connections and connection tests
-- frame or subassembly tests when the column specimen's own ultimate capacity
-  cannot be separated
-- wall, pier, brace, panel, slab, or other non-column members
-- pure bending tests without a recoverable column axial/eccentric ultimate load
-  capacity
-- hollow steel tube / bare steel tube / empty steel tube / steel-only controls
-  without concrete infill
-- concrete-only controls, steel-only controls, or other non-CFST comparison rows
-- FE-only, theory-only, review-only, or numerical-parametric rows without
-  physical specimen capacity data
-- papers where CFST columns appear only as background and no separable CFST
-  column ultimate-capacity data can be recovered.
--  intentionally hollow-core CFST-type specimens, including double-skin,
-    double-tube, or hollow-sandwich CFST columns, even when `n_exp` is reported.
-
-
-A paper is `is_valid=true` when at least one in-scope CFST column specimen row
-can be extracted. A paper is invalid only when no in-scope CFST column
-ultimate-capacity data can be recovered.
-
-Grouped average ultimate capacities are usable when the paper explicitly
-defines the repeated-specimen group membership, or gives enough specimen-count /
-parameter-set mapping to assign the same reported average to each member
-specimen row without fabricating group composition. In that case, store the same
-`n_exp` on each member row and explain the reported average using the note
-placement rule in section 9. If a paper reports only grouped averages but the
-member-to-row mapping is not defensibly recoverable, do not fabricate individual
-specimen rows.
+Retain a row only when all required effective fields are recoverable. For
+recoverable grouped averages, assign the reported average `n_exp` to each member
+row; do not fabricate group composition.
 
 ## 2. Required Parameters
 
-Record only **CFST column ultimate load-capacity data**. Do not include beams,
-joints, connections, pure-bending tests, or similar non-target data.
+Record only **CFST column full-section compression ultimate load-capacity
+data**. Do not include beams, joints, connections, pure-bending tests, or
+similar non-target data.
 
 Parameters to extract:
 
@@ -382,22 +352,7 @@ precision.
 Use `scripts/safe_calc.py` for every unit conversion or derived value, including
 eccentricity resultants, `r0 = h / 2`, and figure/formula-derived dimensions.
 
-## 10. Invalid Or Failed Extraction
-
-### 10.1 Invalid Paper
-
-Produce an invalid JSON using `JSON_contract.md` when the paper has no
-extractable CFST column ultimate-capacity data, including when it is:
-
-- FE-only
-- theory-only or review-only
-- a non-column CFST study without separable column-specimen ultimate-load data
-- a beam, joint, connection, frame, pure-bending, or non-CFST-control study
-  without in-scope CFST column rows
-- missing recoverable experimental ultimate load capacity for every potential
-  CFST column row
-
-### 10.2 Processing Failure
+## 10. Processing Failure
 
 When evidence is insufficient for a defensible extraction:
 
