@@ -53,13 +53,25 @@ MATERIAL_KEYS = {"steel", "concrete"}
 
 SOURCE_TYPES = {"table", "figure", "section", "text", "other"}
 STEEL_TYPES = {"carbon_steel", "stainless_steel", "other"}
-CONCRETE_TYPES = {"normal", "SCC", "UHPC", "UHSC", "recycled_concrete", "other"}
+CONCRETE_TYPES = {
+    "normal",
+    "HSC",
+    "SCC",
+    "EC",
+    "LWAC",
+    "FRC",
+    "UHPC",
+    "UHSC",
+    "recycled_concrete",
+    "other",
+}
 LOADING_MODE_TYPES = {"monotonic", "cyclic", "sustained", "dynamic", "thermal", "other"}
 CONDITION_TYPES = {
     "normal",
     "corrosion",
     "freeze_thaw",
     "thermal",
+    "preload",
     "long_term",
     "defect",
     "damage",

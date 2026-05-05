@@ -219,39 +219,41 @@ from boundary-condition assumptions or effective-length formulas.
 
 ## 5. Eccentricity Rules
 
-Upper-end eccentricity, signed: `e1`
+Upper-end eccentricity: `e1`
 
-Lower-end eccentricity, signed: `e2`
+Lower-end eccentricity: `e2`
 
 Do not put `e1` or `e2` in `paper.defaults`.
 
-Use `Group_X.shared` when every specimen in a group has the same eccentricity,
-for example axial groups:
+Use `Group_X.shared` when every specimen in a group has the same eccentricity;
+otherwise use specimen fields.
 
-```json
-"shared": {"e1": 0, "e2": 0}
-```
+For axial loading, use `e1 = 0` and `e2 = 0`.
 
-Use specimen fields when eccentricity varies row by row.
+If end eccentricity direction is recoverable, store `e1` and `e2` as signed
+values. Same-side end eccentricities use the same sign; opposite-side end
+eccentricities use opposite signs.
 
-If `e_x_top` and `e_y_top` are distinguished, then:
+If only unsigned magnitudes are reported but the same-side/opposite-side
+relationship is recoverable, take `e1` as positive by convention and assign
+`e2` only to preserve that relationship. If the relationship is not recoverable,
+store non-negative values.
+
+| Eccentricity pattern | `e1` | `e2` |
+| -------------------- | ---- | ---- |
+| Axial loading | 0 | 0 |
+| Same-side equal-end eccentricity | e | e |
+| Same-side unequal-end eccentricity | e_top | e_bottom |
+| Opposite-side equal-end eccentricity | e | -e |
+| Opposite-side unequal-end eccentricity | e_top | -e_bottom |
+
+For biaxial eccentricity (see `biaxial_eccentricity.png`), use the end
+resultant:
 
 ```text
-e1 = sqrt(e_x_top^2 + e_y_top^2)
+e1 = sqrt(e1x^2 + e1y^2)
+e2 = sqrt(e2x^2 + e2y^2)
 ```
-
-The lower-end eccentricity follows the same rule.
-
-When the paper reports signed eccentricities, preserve the paper's sign. The
-sign records direction: `e1` and `e2` with the same sign act in the same
-direction; opposite signs act in opposite directions. If the paper reports only
-unsigned eccentricity magnitudes, store non-negative values.
-
-| Eccentricity pattern | `e1` | `e2` | Meaning |
-| -------------------- | ---- | ---- | ------- |
-| Axial loading | 0 | 0 | Load passes through the section centroid |
-| Equal-end eccentric loading | e | e | Upper and lower eccentricities are equal |
-| Unequal-end eccentric loading | e1 | e2 | Upper and lower eccentricities are unequal |
 
 ## 6. Material Rules
 
@@ -270,7 +272,11 @@ unsigned eccentricity magnitudes, store non-negative values.
 `material.concrete` values:
 
 - `normal`
+- `HSC`: high-strength concrete
 - `SCC`
+- `EC`: expansive concrete
+- `LWAC`: lightweight aggregate concrete
+- `FRC`: fiber-reinforced concrete
 - `UHPC`
 - `UHSC`
 - `recycled_concrete`
@@ -313,19 +319,21 @@ deterioration, damage, strengthening, or environmental exposure.
 
 `condition` values:
 
-- `normal`: conventional undeteriorated specimen; no corrosion, freeze-thaw,
-  high temperature, pre-damage, or obvious defect
+- `normal`: conventional undeteriorated specimen; no preload, corrosion,
+  freeze-thaw, high temperature, pre-damage, or obvious defect
 - `corrosion`: chloride corrosion, acid-rain corrosion, atmospheric corrosion,
   electrochemical accelerated corrosion, etc.
 - `freeze_thaw`: water freeze-thaw, salt freeze-thaw, multiple freeze-thaw
   cycles, etc.
 - `thermal`: temperature/fire condition, high-temperature action, fire exposure,
   post-fire residual capacity, etc.
+- `preload`: preloading or initial stress applied before the final ultimate
+  capacity test
 - `long_term`: sustained load, creep, service-load history, etc.
 - `defect`: initial or construction defect, debonding, voids, initial gaps,
   local dents, initial geometric imperfections, etc.
-- `damage`: pre-damage, preload damage, impact damage, cyclic damage, residual
-  capacity after local buckling, etc.
+- `damage`: pre-damage, impact damage, cyclic damage, residual capacity after
+  local buckling, etc.
 - `strengthened`: strengthening/repair, FRP strengthening, steel-sleeve
   strengthening, concrete/UHPC jacketing, post-corrosion repair, etc.
 - `other`: other special condition

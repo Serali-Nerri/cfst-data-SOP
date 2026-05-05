@@ -14,6 +14,7 @@ Treat this file and these resources as the complete one-paper extraction contrac
 - `references/extraction-rules.md`: extraction scope and field rules for all CFST column ultimate-capacity data
 - `references/fc-basis-rules.md`: decision framework for `fco` and `fc_type`
 - `references/section_shapes.jpg`: visual reference for `Group_A-D` section groups and `r0`
+- `references/biaxial_eccentricity.png`: visual reference for biaxial eccentricity resultants
 - `references/JSON_contract.md`: authoritative human-readable JSON authoring contract, including validator-equivalent writing rules
 - `scripts/safe_calc.py`: sandbox-only arithmetic helper for conversions and derived values
 - `scripts/validate_single_output.py`: sandbox-only execution tool for validating the final JSON

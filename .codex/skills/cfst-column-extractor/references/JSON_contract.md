@@ -420,14 +420,8 @@ Every retained specimen must resolve these effective fields after inheritance:
 
 Use `r_ratio = 0` when recycled aggregate is not applicable or not reported.
 
-For axial compression, use `e1 = 0` and `e2 = 0`. Because eccentricity is often
-an experimental variable, write `e1` and `e2` in group `shared` or specimens,
-not in `paper.defaults`.
-
-When the paper reports signed eccentricities, preserve the paper's sign. The
-sign records direction: `e1` and `e2` with the same sign act in the same
-direction; opposite signs act in opposite directions. If the paper reports only
-unsigned eccentricity magnitudes, store non-negative values.
+Because eccentricity is a group/specimen experimental variable, write `e1` and
+`e2` in group `shared` or specimens, not in `paper.defaults`.
 
 Each `specimen_label` MUST be unique across all groups.
 
@@ -542,7 +536,11 @@ strength basis and match the validator pattern.
 `material.concrete` values:
 
 - `normal`
+- `HSC`
 - `SCC`
+- `EC`
+- `LWAC`
+- `FRC`
 - `UHPC`
 - `UHSC`
 - `recycled_concrete`
@@ -569,6 +567,7 @@ Paper-Level Source Notes.
 - `corrosion`
 - `freeze_thaw`
 - `thermal`
+- `preload`
 - `long_term`
 - `defect`
 - `damage`
@@ -605,7 +604,7 @@ defaults and their derivation basis:
   "fco": "Source S1 reports fcu=76.8 MPa converted to fck=53.4 MPa; stored fco is 53.4 MPa.",
   "fc_type": "The stored value is the converted standard compressive strength, treated as prism.",
   "loading_mode": "Source S2 describes monotonic axial compression.",
-  "condition": "No corrosion, freeze-thaw, fire, pre-damage, or strengthening is reported.",
+  "condition": "No preload, deterioration, thermal exposure, or strengthening is reported.",
   "material": "Source S1 reports carbon-steel tubes and normal concrete."
 }
 ```
@@ -643,7 +642,11 @@ quotes, and conversion/derivation phrases.
 `material.concrete` values:
 
 - `normal`
+- `HSC`
 - `SCC`
+- `EC`
+- `LWAC`
+- `FRC`
 - `UHPC`
 - `UHSC`
 - `recycled_concrete`
@@ -664,6 +667,7 @@ quotes, and conversion/derivation phrases.
 - `corrosion`
 - `freeze_thaw`
 - `thermal`
+- `preload`
 - `long_term`
 - `defect`
 - `damage`
@@ -700,15 +704,15 @@ from `Group_C.shared`; specimen rows supply values that vary.
       "fc_type": "prism",
       "loading_mode": "monotonic",
       "condition": "normal",
-      "material": {"steel": "carbon_steel", "concrete": "normal"}
+      "material": {"steel": "carbon_steel", "concrete": "HSC"}
     },
     "default_consistency": {"fco": true, "fc_type": true, "loading_mode": true, "condition": true, "material": true},
     "default_notes": {
       "fco": "Source S1 reports one converted concrete strength fck=53.4 MPa.",
       "fc_type": "Stored strength uses the converted standard compressive strength basis.",
       "loading_mode": "Source S2 identifies axial monotonic compression.",
-      "condition": "No special deterioration or strengthening condition is reported.",
-      "material": "Source S1 reports steel tubes and high-strength normal concrete."
+      "condition": "No special deterioration, strengthening, or preload condition is reported.",
+      "material": "Source S1 reports steel tubes and high-strength concrete."
     },
     "notes": null
   },
