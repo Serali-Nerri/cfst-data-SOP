@@ -209,6 +209,9 @@ relationship is recoverable, take `e1` as positive by convention and assign
 `e2` only to preserve that relationship. If the relationship is not recoverable,
 store non-negative values.
 
+When inferring eccentricity signs from moment ratios or curvature labels, first
+separate moment-sign convention from geometric eccentricity direction.
+
 | Eccentricity pattern | `e1` | `e2` |
 | -------------------- | ---- | ---- |
 | Axial loading | 0 | 0 |
