@@ -83,13 +83,6 @@ def build_brief(spec: dict[str, Any]) -> str:
     package = spec["package"]
     output = spec["output"]
     commands = spec["commands"]
-    retry = spec.get("retry")
-    retry_section = ""
-    if isinstance(retry, dict) and retry.get("previous_failure"):
-        retry_section = f"""
-Previous failure:
-{retry["previous_failure"]}
-"""
     return f"""Own exactly one CFST paper.
 Use the $cfst-column-extractor skill for extraction policy and JSON authoring rules.
 The sandbox commands expose the child skill scripts inside the worker workspace; run those commands exactly as provided.
@@ -114,7 +107,6 @@ Commands:
 ```bash
 {commands["validation_command"]}
 ```
-{retry_section}
 
 Path note:
 - Input paths are host paths for reading and writing.
@@ -144,7 +136,6 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--worker-spaces-root", type=Path, default=Path("tmp/cfst-worker-spaces"))
     parser.add_argument("--extractor-skill-dir", type=Path, default=DEFAULT_EXTRACTOR_SKILL_DIR)
     parser.add_argument("--orchestrator-skill-dir", type=Path, default=DEFAULT_ORCHESTRATOR_SKILL_DIR)
-    parser.add_argument("--retry-reason", default=None, help="Exact previous failure reason to include in worker_brief.md.")
     parser.add_argument("--force", action="store_true", help="Overwrite destination paths if they already exist.")
     return parser.parse_args()
 
@@ -326,9 +317,6 @@ def main() -> int:
             "artifacts": {
                 "job_spec_path": str(spec_path),
                 "worker_brief_path": str(brief_path),
-            },
-            "retry": {
-                "previous_failure": args.retry_reason,
             },
         }
         write_json(spec_path, spec)

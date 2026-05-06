@@ -55,14 +55,7 @@ python .codex/skills/cfst-orchestrator/scripts/build_worker_job_spec.py \
   --paper-id <paper_id>
 ```
 
-For retries, include the exact prior failure in the regenerated brief:
-
-```bash
-python .codex/skills/cfst-orchestrator/scripts/build_worker_job_spec.py \
-  --worker-jobs output/manifests/worker_jobs.json \
-  --paper-id <paper_id> \
-  --retry-reason '<exact failure>'
-```
+For retries, rerun the same command to build a fresh worker workspace and standard worker brief.
 
 The script copies `Pending/[paper_id]/` and `.codex/skills/cfst-column-extractor/` into `tmp/cfst-worker-spaces/<paper_id>-<timestamp>-<pid>/`, writes parent-owned job metadata under `output/tmp/<paper_id>/`, and generates the complete sandbox and validation commands. Use the generated `worker_brief.md` as the worker prompt; do not hand-write long sandbox commands.
 
@@ -111,7 +104,7 @@ Use `python .codex/skills/cfst-orchestrator/scripts/update_batch_state.py --batc
 Handle returned worker status this way:
 
 - `success`: verify the JSON exists, mark `ready_for_publication`, and publish later.
-- `validation_failure` or `extraction_failure`: retry once with a fresh worker workspace and the exact failure reason in the new worker brief.
+- `validation_failure` or `extraction_failure`: retry once with a fresh worker workspace.
 - `input_contract_failure`: fix or mark the parent-owned Pending package before rerunning.
 - `sandbox_failure`: fix the parent-owned command, path, mount, or startup issue before rerunning with a fresh worker workspace.
 - `documentation_validator_mismatch`: stop and report the child documentation/validator mismatch.
