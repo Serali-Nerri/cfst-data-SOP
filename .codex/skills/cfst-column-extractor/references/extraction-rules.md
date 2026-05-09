@@ -170,22 +170,22 @@ For `Group_D` round-ended sections:
 
 `L`:
 
-Determine `L` as the project geometric specimen length in the following priority
-order:
+Determine `L` as the recoverable geometric specimen length. Use the clearest
+defensible evidence available. Common acceptable bases include, but are not
+limited to:
 
 1. Explicit specimen length in the paper text / tables / notes
 2. Explicit formula or ratio with clear variable meaning
 3. Figure-based derivation with clear geometric evidence, including steel-tube
    clear height when the figure makes that geometric relationship clear
 
-If the paper does not directly name `L`, but the specimen / setup figure makes
-the steel-tube clear height derivable, use that geometric length and describe
-the source and derivation basis only in `paper.data_sources`, `paper.default_notes`,
-or `paper.notes`. Do not put source names, figure names, table names, quotes, or
-derivation basis text in group or specimen notes.
+If the paper does not directly name `L`, use a derived geometric length only
+when the specimen / setup figure or other source evidence makes the geometric
+relationship clear.
 
-When the geometric basis is ambiguous, do not populate `L`. Do not infer `L`
-from boundary-condition assumptions or effective-length formulas.
+When the geometric basis is ambiguous, the row is not recoverable under the
+required effective field rule. Do not infer `L` from boundary-condition
+assumptions or effective-length formulas.
 
 ## 5. Eccentricity Rules
 
