@@ -1,0 +1,4 @@
+interface:
+  display_name: "CFST Data Review"
+  short_description: "Orchestrate CFST CSV evidence reviews"
+  default_prompt: "Use $cfst-data-review to prepare Pending/output data and orchestrate CFST CSV review records."
