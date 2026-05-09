@@ -15,6 +15,7 @@ from typing import Any
 
 
 GROUP_ORDER = ("Group_A", "Group_B", "Group_C", "Group_D")
+SCHEMA_VERSION = "3.0"
 
 PAPER_KEYS = {
     "ref_info",
@@ -29,7 +30,7 @@ VALIDITY_KEYS = {"is_valid", "reason"}
 DATA_SOURCE_KEYS = {"source_id", "type", "name", "description"}
 PAPER_DEFAULT_KEYS = {"fco", "fc_type", "loading_mode", "condition", "material"}
 DEFAULT_CONSISTENCY_KEYS = {"fco", "fc_type", "loading_mode", "condition", "material"}
-DEFAULT_NOTES_KEYS = {"fco", "fc_type", "loading_mode", "condition", "material"}
+DEFAULT_NOTES_KEYS = {"fco", "fc_type", "loading_mode", "material"}
 GROUP_KEYS = {"shared", "specimens", "note"}
 DATA_KEYS = {
     "fco",
@@ -65,24 +66,22 @@ CONCRETE_TYPES = {
     "recycled_concrete",
     "other",
 }
-LOADING_MODE_TYPES = {"monotonic", "cyclic", "sustained", "dynamic", "thermal", "other"}
-CONDITION_TYPES = {
-    "normal",
-    "corrosion",
-    "freeze_thaw",
-    "thermal",
-    "preload",
-    "long_term",
-    "defect",
-    "damage",
-    "strengthened",
-    "other",
-}
+LOADING_MODE_TYPES = {"monotonic", "cyclic", "sustained", "dynamic", "other"}
 
 FC_TYPE_PATTERN = re.compile(
     r"^(cube|cube_[0-9]+|cylinder|cylinder_[0-9]+x[0-9]+|prism|prism_[0-9]+x[0-9]+x[0-9]+|unknown|[A-Za-z0-9_\-x]+)$"
 )
 FC_TYPE_DISALLOWED_SYMBOL_PATTERN = re.compile(r"^(f'?c|fc'|fcu|fck|fcm|fcd)$", re.IGNORECASE)
+CONDITION_TAG_PATTERN = re.compile(
+    r"^(normal|temperature_-?[0-9]+(?:\.[0-9]+)?C|temperature_heat|temperature_cold|"
+    r"corrosion|corrosion_[0-9]+(?:\.[0-9]+)?%|freeze_thaw|freeze_thaw_[1-9][0-9]*cycles|"
+    r"load_history|preload_(?:0\.[0-9]+|1(?:\.0+)?)|sustained_load_(?:0\.[0-9]+|1(?:\.0+)?)|"
+    r"initial_stress_(?:0\.[0-9]+|1(?:\.0+)?)|cyclic_damage|blast_damage|impact_damage|"
+    r"defect_damage|defect_damage_[A-Za-z0-9]+(?:_[A-Za-z0-9]+)*|"
+    r"strengthening_repair|strengthening_repair_[A-Za-z0-9]+(?:_[A-Za-z0-9]+)*|other)$"
+)
+CORROSION_TAG_PATTERN = re.compile(r"^corrosion_([0-9]+(?:\.[0-9]+)?)%$")
+RATIO_TAG_PATTERN = re.compile(r"^(preload|sustained_load|initial_stress)_([0-9]+(?:\.[0-9]+)?)$")
 ROUNDED_NOTE_PATTERN = re.compile(r"(rounded|round[- ]?corner|corner radius|圆角)", re.IGNORECASE)
 LOCAL_NOTE_SOURCE_PATTERN = re.compile(
     r"("
@@ -386,6 +385,23 @@ def _validate_loading_mode(
         ctx.warning(f"`{tag}` is `other`; explain it in the nearest applicable note.")
 
 
+def _check_broad_specific_condition_tags(
+    tags: set[str],
+    tag: str,
+    ctx: ValidationContext,
+    *,
+    broad: str,
+    specific_prefix: str | None = None,
+    specific_prefixes: tuple[str, ...] | None = None,
+) -> None:
+    if broad not in tags:
+        return
+    prefixes = specific_prefixes or ((specific_prefix,) if specific_prefix is not None else ())
+    specifics = sorted(item for item in tags if any(item.startswith(prefix) for prefix in prefixes))
+    if specifics:
+        ctx.error(f"`{tag}.tags` combines broad tag `{broad}` with specific tags: {specifics}.")
+
+
 def _validate_condition(
     value: Any,
     tag: str,
@@ -394,10 +410,92 @@ def _validate_condition(
     note: Any,
     require_other_note: bool = True,
 ) -> None:
-    if not isinstance(value, str) or value not in CONDITION_TYPES:
-        ctx.error(f"`{tag}` invalid: {value}.")
-    elif require_other_note and value == "other" and not _nonempty_string(note):
-        ctx.warning(f"`{tag}` is `other`; explain it in the nearest applicable note.")
+    if not isinstance(value, dict):
+        ctx.error(f"`{tag}` must be object.")
+        return
+    _check_keys(value, {"tags", "notes"}, {"tags", "notes"}, tag, ctx)
+
+    tags = value.get("tags")
+    notes = value.get("notes")
+    if not isinstance(tags, list):
+        ctx.error(f"`{tag}.tags` must be list.")
+        tags = []
+    elif not tags:
+        ctx.error(f"`{tag}.tags` must contain at least one item.")
+
+    seen: set[str] = set()
+    normalized_tags: list[str] = []
+    for idx, item in enumerate(tags):
+        item_tag = f"{tag}.tags[{idx}]"
+        if not isinstance(item, str):
+            ctx.error(f"`{item_tag}` must be string.")
+            continue
+        if item != item.strip() or not _nonempty_string(item):
+            ctx.error(f"`{item_tag}` must be a non-empty trimmed single-line string.")
+            continue
+        if CONDITION_TAG_PATTERN.fullmatch(item) is None:
+            ctx.error(f"`{item_tag}` invalid condition tag: {item}.")
+            continue
+        if item in seen:
+            ctx.error(f"`{tag}.tags` contains duplicate tag `{item}`.")
+        seen.add(item)
+        normalized_tags.append(item)
+
+        corrosion = CORROSION_TAG_PATTERN.fullmatch(item)
+        if corrosion and not (0.0 < float(corrosion.group(1)) <= 100.0):
+            ctx.error(f"`{item_tag}` corrosion percentage must be > 0 and <= 100.")
+        ratio = RATIO_TAG_PATTERN.fullmatch(item)
+        if ratio and not (0.0 < float(ratio.group(2)) <= 1.0):
+            ctx.error(f"`{item_tag}` ratio must be > 0 and <= 1.")
+
+    _validate_local_exception_note(notes, f"{tag}.notes", ctx)
+
+    tag_set = set(normalized_tags)
+    if "normal" in tag_set and len(tag_set) > 1:
+        ctx.error(f"`{tag}.tags` uses `normal`; it must be the only condition tag.")
+    if require_other_note and tag_set != {"normal"} and not _nonempty_string(notes):
+        ctx.error(f"`{tag}.notes` must explain non-normal condition tags.")
+    if require_other_note and "other" in tag_set and not _nonempty_string(notes):
+        ctx.error(f"`{tag}.tags` includes `other`; explain it in `condition.notes`.")
+
+    temperature_tags = {item for item in tag_set if item.startswith("temperature_")}
+    if len(temperature_tags) > 1:
+        ctx.error(f"`{tag}.tags` has multiple temperature tags: {sorted(temperature_tags)}.")
+    _check_broad_specific_condition_tags(
+        tag_set,
+        tag,
+        ctx,
+        broad="corrosion",
+        specific_prefix="corrosion_",
+    )
+    _check_broad_specific_condition_tags(
+        tag_set,
+        tag,
+        ctx,
+        broad="freeze_thaw",
+        specific_prefix="freeze_thaw_",
+    )
+    _check_broad_specific_condition_tags(
+        tag_set,
+        tag,
+        ctx,
+        broad="load_history",
+        specific_prefixes=("preload_", "sustained_load_", "initial_stress_"),
+    )
+    _check_broad_specific_condition_tags(
+        tag_set,
+        tag,
+        ctx,
+        broad="defect_damage",
+        specific_prefix="defect_damage_",
+    )
+    _check_broad_specific_condition_tags(
+        tag_set,
+        tag,
+        ctx,
+        broad="strengthening_repair",
+        specific_prefix="strengthening_repair_",
+    )
 
 
 def _validate_data_fields(
@@ -518,7 +616,9 @@ def _deep_merge(base: Any, override: Any) -> Any:
     if isinstance(base, dict) and isinstance(override, dict):
         result = deepcopy(base)
         for key, value in override.items():
-            if key in result:
+            if key == "condition":
+                result[key] = deepcopy(value)
+            elif key in result:
                 result[key] = _deep_merge(result[key], value)
             else:
                 result[key] = deepcopy(value)
@@ -548,6 +648,10 @@ def _values_equal(left: Any, right: Any) -> bool:
     return left == right
 
 
+def _condition_has_note(value: Any) -> bool:
+    return isinstance(value, dict) and _nonempty_string(value.get("notes"))
+
+
 def _check_default_overrides(
     data: dict[str, Any],
     tag: str,
@@ -566,6 +670,8 @@ def _check_default_overrides(
         applies_to_all = consistency.get(key)
         if applies_to_all is True:
             ctx.error(f"`{tag}.{key}` overrides `paper.defaults.{key}` even though `paper.default_consistency.{key}=true`.")
+        elif applies_to_all is False and key == "condition" and _condition_has_note(data[key]):
+            continue
         elif applies_to_all is False and not _nonempty_string(note):
             ctx.error(f"`{tag}.{key}` overrides `paper.defaults.{key}`; explain the special case in `note`.")
 
@@ -585,6 +691,10 @@ def _require_effective_fields(value: dict[str, Any], tag: str, ctx: ValidationCo
     for key in ("fco", "fc_type", "fy", "r_ratio", "b", "h", "t", "r0", "L", "e1", "e2", "n_exp", "loading_mode", "condition", "material"):
         if key not in value:
             ctx.error(f"`{tag}.{key}` is required after inheritance.")
+    if isinstance(value.get("condition"), dict):
+        for key in ("tags", "notes"):
+            if key not in value["condition"]:
+                ctx.error(f"`{tag}.condition.{key}` is required after inheritance.")
     if isinstance(value.get("material"), dict):
         for key in ("steel", "concrete"):
             if key not in value["material"]:
@@ -787,7 +897,7 @@ def validate_payload(
 
 def main() -> int:
     _assert_sandbox()
-    parser = argparse.ArgumentParser(description="Validate single-paper CFST extraction JSON 2.0.0-draft. Requires CFST_SANDBOX=1.")
+    parser = argparse.ArgumentParser(description=f"Validate single-paper CFST extraction JSON {SCHEMA_VERSION}. Requires CFST_SANDBOX=1.")
     parser.add_argument("--json-path", required=True, help="Path to extraction JSON file.")
     parser.add_argument(
         "--expect-valid",

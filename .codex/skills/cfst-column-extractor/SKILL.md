@@ -1,6 +1,6 @@
 ---
 name: cfst-column-extractor
-description: Extract all experimental CFST column ultimate load-capacity data from one caller-provided Pending paper package into standardized schema 2.0.0-draft JSON.
+description: Use only when explicitly specified by the user; extract one Pending paper package into CFST schema 3.0 JSON.
 ---
 
 # CFST Column Extractor

@@ -82,8 +82,8 @@ Parameters to extract:
 | N   | `n_exp`          | kN   | Experimental ultimate load capacity |
 | O   | Group key        | -    | `Group_A` square, `Group_B` rectangular, `Group_C` circular, `Group_D` round-ended |
 | P   | `material`       | -    | Steel and concrete material categories |
-| Q   | `loading_mode`   | -    | Loading mode and loading history applied to the specimen |
-| R   | `condition`      | -    | Conditions applied to the specimen before or during testing |
+| Q   | `loading_mode`   | -    | Primary mechanical loading regime for the reported capacity |
+| R   | `condition`      | -    | Condition object: searchable `tags` plus short `notes` |
 
 Use inheritance only for genuinely shared values:
 
@@ -265,7 +265,7 @@ and set `paper.default_consistency.material=true`. If it varies, set
 
 ## 7. Loading Mode Rules
 
-`loading_mode` is a coarse category for the primary loading or action regime
+`loading_mode` is a coarse category for the primary mechanical loading regime
 associated with the reported ultimate load.
 
 `loading_mode` values:
@@ -274,8 +274,11 @@ associated with the reported ultimate load.
 - `cyclic`: cyclic / reversed loading
 - `sustained`: long-term load / sustained load
 - `dynamic`: impact, blast, or dynamic loading
-- `thermal`: high temperature, fire, or post-fire residual
 - `other`: other loading type
+
+Do not encode temperature, fire, corrosion, freeze-thaw, preload, sustained-load
+history, damage, or repair in `loading_mode`; use `condition.tags` and
+`condition.notes` for those.
 
 When `loading_mode = "other"`, briefly explain it using the note placement rule
 in section 9.
@@ -287,35 +290,32 @@ in `Group_X.shared` or specimen fields with notes for special cases.
 
 ## 8. Condition Rules
 
-`condition` is a coarse category for the specimen's dominant state, treatment,
-deterioration, damage, strengthening, or environmental exposure.
+`condition` is an object with exactly `tags` and `notes`. Use it for specimen
+state, exposure, prior loading history, damage, or repair conditions. Do not
+encode geometry, material strength, dimensions, eccentricity, or ordinary
+loading type here.
 
-`condition` values:
+`condition.tags` allowed templates:
 
-- `normal`: conventional undeteriorated specimen; no preload, corrosion,
-  freeze-thaw, high temperature, pre-damage, or obvious defect
-- `corrosion`: chloride corrosion, acid-rain corrosion, atmospheric corrosion,
-  electrochemical accelerated corrosion, etc.
-- `freeze_thaw`: water freeze-thaw, salt freeze-thaw, multiple freeze-thaw
-  cycles, etc.
-- `thermal`: temperature/fire condition, high-temperature action, fire exposure,
-  post-fire residual capacity, etc.
-- `preload`: preloading or initial stress applied before the final ultimate
-  capacity test
-- `long_term`: sustained load, creep, service-load history, etc.
-- `defect`: initial or construction defect, debonding, voids, initial gaps,
-  local dents, initial geometric imperfections, etc.
-- `damage`: pre-damage, impact damage, cyclic damage, residual capacity after
-  local buckling, etc.
-- `strengthened`: strengthening/repair, FRP strengthening, steel-sleeve
-  strengthening, concrete/UHPC jacketing, post-corrosion repair, etc.
-- `other`: other special condition
+| Family | Templates | Meaning |
+|---|---|---|
+| normal | `normal` | No special condition; use alone. |
+| temperature | `temperature_C`, `temperature_heat`, `temperature_cold` | Specific °C value, unspecified heat/fire, or unspecified cold. |
+| corrosion | `corrosion`, `corrosion_P` | Corrosion, with optional reported loss percentage. |
+| freeze-thaw | `freeze_thaw`, `freeze_thaw_N` | Freeze-thaw, with optional cycle count. |
+| load history | `load_history`, `preload_R`, `sustained_load_R`, `initial_stress_R` | Prior load history, with optional reported ratio. |
+| prior damage | `cyclic_damage`, `blast_damage`, `impact_damage` | Prior cyclic, blast, or impact damage. |
+| defect/damage | `defect_damage`, `defect_damage_TYPE`, `defect_damage_LEVEL` | Defect or damage, optionally by type or level. |
+| strengthening/repair | `strengthening_repair`, `strengthening_repair_TYPE` | Strengthening or repair, optionally by type. |
+| other | `other` | Other special condition; explain in `condition.notes`. |
 
-For multi-factor cases, choose the dominant category for coarse normalization
-and explain secondary factors using the note placement rule in section 9.
+Placeholders: `C` = Celsius value, `P` = percentage, `N` = cycle count, `R` =
+ratio. Use the most specific tag available; do not combine broad and specific
+tags in the same family. Put procedural details in `condition.notes`.
 
-When `condition = "other"`, briefly explain it using the note placement rule in
-section 9.
+Use `{"tags": ["normal"], "notes": null}` for ordinary specimens with no
+reported special condition. For non-normal tags, write a short source-free
+natural-language `condition.notes` description.
 
 When condition is shared by all retained specimens, write it in
 `paper.defaults` and set `paper.default_consistency.condition=true`. If it
@@ -333,7 +333,8 @@ or derivation basis text under groups or specimens.
 that support the extraction overall. Keep descriptions short.
 
 Use `paper.default_notes` to describe the paper-level basis for `fco`,
-`fc_type`, `loading_mode`, `condition`, and `material`.
+`fc_type`, `loading_mode`, and `material`. Use `condition.notes` for condition
+descriptions.
 
 Place non-source explanatory notes at the same inheritance level as the value
 they explain: `paper.default_notes.<field>` for paper defaults, `Group_X.note`

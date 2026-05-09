@@ -15,7 +15,7 @@
   "properties": {
     "schema_version": {
       "type": "string",
-      "const": "2.0.0-draft"
+      "const": "3.0"
     },
     "paper": {
       "$ref": "#/$defs/paper"
@@ -236,7 +236,6 @@
         "fco",
         "fc_type",
         "loading_mode",
-        "condition",
         "material"
       ],
       "properties": {
@@ -253,12 +252,6 @@
           ]
         },
         "loading_mode": {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "condition": {
           "type": [
             "string",
             "null"
@@ -457,24 +450,36 @@
         "cyclic",
         "sustained",
         "dynamic",
-        "thermal",
         "other"
       ]
     },
     "condition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tags",
+        "notes"
+      ],
+      "properties": {
+        "tags": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/condition_tag"
+          }
+        },
+        "notes": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "condition_tag": {
       "type": "string",
-      "enum": [
-        "normal",
-        "corrosion",
-        "freeze_thaw",
-        "thermal",
-        "preload",
-        "long_term",
-        "defect",
-        "damage",
-        "strengthened",
-        "other"
-      ]
+      "pattern": "^(normal|temperature_-?[0-9]+(?:\\.[0-9]+)?C|temperature_heat|temperature_cold|corrosion|corrosion_[0-9]+(?:\\.[0-9]+)?%|freeze_thaw|freeze_thaw_[1-9][0-9]*cycles|load_history|preload_(?:0\\.[0-9]+|1(?:\\.0+)?)|sustained_load_(?:0\\.[0-9]+|1(?:\\.0+)?)|initial_stress_(?:0\\.[0-9]+|1(?:\\.0+)?)|cyclic_damage|blast_damage|impact_damage|defect_damage|defect_damage_[A-Za-z0-9]+(?:_[A-Za-z0-9]+)*|strengthening_repair|strengthening_repair_[A-Za-z0-9]+(?:_[A-Za-z0-9]+)*|other)$"
     },
     "fc_type": {
       "type": "string",

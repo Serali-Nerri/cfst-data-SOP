@@ -145,7 +145,7 @@ python .codex/skills/cfst-orchestrator/scripts/export_json_outputs_to_csv.py \
 The CSV writer exports one row per specimen and resolves effective specimen data with the JSON contract inheritance order: `paper.defaults`, then `Group_X.shared`, then the specimen object. The default columns are:
 
 ```text
-Ref.info., fco (MPa), fc_type, Specimen, fy (MPa), fcy150(Mpa), R (%), b (mm), h (mm), t (mm), r0 (mm), L (mm), e1 (mm), e2 (mm), Nexp (kN), Group, Material.steel, Material.concrete, loading mode, condition
+Ref.info., fco (MPa), fc_type, Specimen, fy (MPa), fcy150(Mpa), R (%), b (mm), h (mm), t (mm), r0 (mm), L (mm), e1 (mm), e2 (mm), Nexp (kN), Group, Material.steel, Material.concrete, loading mode, condition tags, condition notes
 ```
 
 CSV field rules:
@@ -153,5 +153,6 @@ CSV field rules:
 - `Ref.info.` is `first author,title,journal,year`.
 - `fcy150(Mpa)` is intentionally blank for later normalized concrete-strength values.
 - `Group` is written as `A`, `B`, `C`, or `D`.
-- `Material.steel`, `Material.concrete`, `loading mode`, and `condition` use the effective inherited value exactly as stored.
+- `Material.steel`, `Material.concrete`, and `loading mode` use the effective inherited value exactly as stored.
+- `condition tags` joins effective `condition.tags` with `;`; `condition notes` uses effective `condition.notes`.
 - The default CSV encoding is `utf-8-sig` so Chinese bibliographic text opens cleanly in common spreadsheet tools.

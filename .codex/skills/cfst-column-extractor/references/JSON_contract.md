@@ -9,8 +9,8 @@ Documented validator warnings include:
 - A specimen repeats the same value already supplied by its group `shared`
   object.
 - A `Group_B` row has `b == h`; verify whether it belongs in `Group_A`.
-- `material`, `loading_mode`, or `condition` uses `other` without an applicable
-  explanatory note.
+- `material` or `loading_mode` uses `other` without an applicable explanatory
+  note.
 - Numeric values are not rounded to 0.001 when validation is run without
   `--strict-rounding`; under `--strict-rounding`, this is an error.
 
@@ -50,7 +50,7 @@ this contract and the validator.
 
 ```json
 {
-  "schema_version": "2.0.0-draft",
+  "schema_version": "3.0",
   "paper": {
     "ref_info": {
       "title": "Paper title",
@@ -73,7 +73,7 @@ this contract and the validator.
       "fco": 53.4,
       "fc_type": "prism",
       "loading_mode": "monotonic",
-      "condition": "normal",
+      "condition": {"tags": ["normal"], "notes": null},
       "material": {"steel": "carbon_steel", "concrete": "normal"}
     },
     "default_consistency": {
@@ -87,7 +87,6 @@ this contract and the validator.
       "fco": "The same concrete strength applies to all retained specimens.",
       "fc_type": "The stored strength basis applies to all retained specimens.",
       "loading_mode": "The same loading mode applies to all retained specimens.",
-      "condition": "The same condition applies to all retained specimens.",
       "material": "The same steel and concrete material categories apply to all retained specimens."
     },
     "notes": null
@@ -186,7 +185,6 @@ or in each specimen.
 - `fco`
 - `fc_type`
 - `loading_mode`
-- `condition`
 - `material`
 
 Each group (`Group_A`, `Group_B`, `Group_C`, `Group_D`) MUST contain exactly:
@@ -245,7 +243,7 @@ under groups or specimens. All source information belongs under `paper`.
 
 Top-level object:
 
-- `schema_version` is required and MUST be exactly `"2.0.0-draft"`.
+- `schema_version` is required and MUST be exactly `"3.0"`.
 - `paper`, `Group_A`, `Group_B`, `Group_C`, and `Group_D` are required objects.
 
 `paper`:
@@ -299,8 +297,9 @@ Top-level object:
 
 - Each value MUST be a string or null.
 - Use these notes to summarize the paper-level basis for `fco`, `fc_type`,
-  `loading_mode`, `condition`, and `material`. Cite source identifiers from
-  `paper.data_sources` in the prose when helpful.
+  `loading_mode`, and `material`. Use `condition.notes` for condition
+  descriptions. Cite source identifiers from `paper.data_sources` in the prose
+  when helpful.
 
 Each group:
 
@@ -380,7 +379,7 @@ this order:
 3. `Group_X.specimens[*]`
 
 Later objects override earlier objects at the field level. Nested `material`
-objects are merged.
+objects are merged. `condition` objects are replaced as whole values.
 
 The practical lookup priority is:
 
@@ -391,7 +390,8 @@ The practical lookup priority is:
 If `paper.default_consistency.<field>` is `true`, lower-level fields MUST NOT
 override that field. If a lower-level field must override it, set the
 corresponding consistency value to `false` and explain the local exception in
-the specimen `note` or, for group-wide deviations, the group `note`.
+the specimen `note` or, for group-wide deviations, the group `note`. For
+`condition` overrides, use the overriding `condition.notes`.
 
 If a specimen writes a field that already exists in its `Group_X.shared`, the
 value MUST be identical. A different value contradicts the meaning of `shared`.
@@ -414,7 +414,8 @@ Every retained specimen must resolve these effective fields after inheritance:
 - `e2`
 - `n_exp`
 - `loading_mode`
-- `condition`
+- `condition.tags`
+- `condition.notes`
 - `material.steel`
 - `material.concrete`
 
@@ -555,27 +556,30 @@ Paper-Level Source Notes.
 - `cyclic`
 - `sustained`
 - `dynamic`
-- `thermal`
 - `other`
 
 When `loading_mode = "other"`, explain it using the note placement rule under
 Paper-Level Source Notes.
 
-`condition` values:
+`condition` is an object with exactly `tags` and `notes`.
 
-- `normal`
-- `corrosion`
-- `freeze_thaw`
-- `thermal`
-- `preload`
-- `long_term`
-- `defect`
-- `damage`
-- `strengthened`
-- `other`
+`condition.tags` allowed templates:
 
-When `condition = "other"`, explain it using the note placement rule under
-Paper-Level Source Notes.
+| Family | Templates | Meaning |
+|---|---|---|
+| normal | `normal` | No special condition; use alone. |
+| temperature | `temperature_C`, `temperature_heat`, `temperature_cold` | Specific °C value, unspecified heat/fire, or unspecified cold. |
+| corrosion | `corrosion`, `corrosion_P` | Corrosion, with optional reported loss percentage. |
+| freeze-thaw | `freeze_thaw`, `freeze_thaw_N` | Freeze-thaw, with optional cycle count. |
+| load history | `load_history`, `preload_R`, `sustained_load_R`, `initial_stress_R` | Prior load history, with optional reported ratio. |
+| prior damage | `cyclic_damage`, `blast_damage`, `impact_damage` | Prior cyclic, blast, or impact damage. |
+| defect/damage | `defect_damage`, `defect_damage_TYPE`, `defect_damage_LEVEL` | Defect or damage, optionally by type or level. |
+| strengthening/repair | `strengthening_repair`, `strengthening_repair_TYPE` | Strengthening or repair, optionally by type. |
+| other | `other` | Other special condition; explain in `condition.notes`. |
+
+Placeholders: `C` = Celsius value, `P` = percentage, `N` = cycle count, `R` =
+ratio. Use the most specific tag available; do not combine broad and specific
+tags in the same family. Put procedural details in `condition.notes`.
 
 ## Paper-Level Source Notes
 
@@ -597,14 +601,14 @@ Preferred pattern:
 ```
 
 Use `paper.default_notes` for short field-level explanations of the paper
-defaults and their derivation basis:
+defaults and their derivation basis. Use `condition.notes` for condition
+descriptions:
 
 ```json
 {
   "fco": "Source S1 reports fcu=76.8 MPa converted to fck=53.4 MPa; stored fco is 53.4 MPa.",
   "fc_type": "The stored value is the converted standard compressive strength, treated as prism.",
   "loading_mode": "Source S2 describes monotonic axial compression.",
-  "condition": "No preload, deterioration, thermal exposure, or strengthening is reported.",
   "material": "Source S1 reports carbon-steel tubes and normal concrete."
 }
 ```
@@ -658,21 +662,10 @@ quotes, and conversion/derivation phrases.
 - `cyclic`
 - `sustained`
 - `dynamic`
-- `thermal`
 - `other`
 
-`condition` values:
-
-- `normal`
-- `corrosion`
-- `freeze_thaw`
-- `thermal`
-- `preload`
-- `long_term`
-- `defect`
-- `damage`
-- `strengthened`
-- `other`
+`condition` is an object with `tags` and `notes`; use the tag templates defined
+above.
 
 ## Examples
 
@@ -684,7 +677,7 @@ from `Group_C.shared`; specimen rows supply values that vary.
 
 ```json
 {
-  "schema_version": "2.0.0-draft",
+  "schema_version": "3.0",
   "paper": {
     "ref_info": {
       "title": "钢管高强混凝土轴压力学性能的理论分析与试验研究",
@@ -703,7 +696,7 @@ from `Group_C.shared`; specimen rows supply values that vary.
       "fco": 53.4,
       "fc_type": "prism",
       "loading_mode": "monotonic",
-      "condition": "normal",
+      "condition": {"tags": ["normal"], "notes": null},
       "material": {"steel": "carbon_steel", "concrete": "HSC"}
     },
     "default_consistency": {"fco": true, "fc_type": true, "loading_mode": true, "condition": true, "material": true},
@@ -711,7 +704,6 @@ from `Group_C.shared`; specimen rows supply values that vary.
       "fco": "Source S1 reports one converted concrete strength fck=53.4 MPa.",
       "fc_type": "Stored strength uses the converted standard compressive strength basis.",
       "loading_mode": "Source S2 identifies axial monotonic compression.",
-      "condition": "No special deterioration, strengthening, or preload condition is reported.",
       "material": "Source S1 reports steel tubes and high-strength concrete."
     },
     "notes": null
@@ -769,7 +761,7 @@ validator-valid invalid output:
 
 ```json
 {
-  "schema_version": "2.0.0-draft",
+  "schema_version": "3.0",
   "paper": {
     "ref_info": {
       "title": "Example Paper Without Extractable CFST Column Tests",
@@ -783,7 +775,7 @@ validator-valid invalid output:
     "data_sources": [],
     "defaults": {},
     "default_consistency": {"fco": false, "fc_type": false, "loading_mode": false, "condition": false, "material": false},
-    "default_notes": {"fco": null, "fc_type": null, "loading_mode": null, "condition": null, "material": null},
+    "default_notes": {"fco": null, "fc_type": null, "loading_mode": null, "material": null},
     "notes": null
   },
   "Group_A": {"shared": {}, "specimens": [], "note": null},
@@ -795,7 +787,7 @@ validator-valid invalid output:
 
 ## Pre-Validation Checklist
 
-- `schema_version` is `2.0.0-draft`.
+- `schema_version` is `3.0`.
 - Top-level keys are exactly `schema_version`, `paper`, `Group_A`, `Group_B`,
   `Group_C`, and `Group_D`.
 - No `section_groups`, `paper_evidence`, `source_locations`, or
