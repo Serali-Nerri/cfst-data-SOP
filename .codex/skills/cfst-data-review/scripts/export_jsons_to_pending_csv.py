@@ -12,6 +12,7 @@ from typing import Any
 
 
 GROUP_KEYS = ("Group_A", "Group_B", "Group_C", "Group_D")
+SCHEMA_VERSION = "3.0"
 
 CSV_HEADERS = [
     "Ref.info.",
@@ -33,7 +34,8 @@ CSV_HEADERS = [
     "Material.steel",
     "Material.concrete",
     "loading mode",
-    "condition",
+    "condition tags",
+    "condition notes",
 ]
 
 REQUIRED_EFFECTIVE_FIELDS = [
@@ -50,7 +52,8 @@ REQUIRED_EFFECTIVE_FIELDS = [
     "e2",
     "n_exp",
     "loading_mode",
-    "condition",
+    "condition.tags",
+    "condition.notes",
     "material.steel",
     "material.concrete",
 ]
@@ -147,9 +150,23 @@ def ref_info_cell(paper: dict[str, Any]) -> str:
 def missing_effective_fields(effective: dict[str, Any]) -> list[str]:
     missing: list[str] = []
     for field in REQUIRED_EFFECTIVE_FIELDS:
+        if field == "condition.notes":
+            condition = effective.get("condition")
+            if not isinstance(condition, dict) or "notes" not in condition:
+                missing.append(field)
+            continue
         if nested_get(effective, field) is None:
             missing.append(field)
     return missing
+
+
+def condition_tags_cell(value: Any) -> str:
+    if not isinstance(value, dict):
+        return ""
+    tags = value.get("tags")
+    if not isinstance(tags, list):
+        return ""
+    return ";".join(clean_cell(tag) for tag in tags)
 
 
 def build_specimen_row(
@@ -185,7 +202,8 @@ def build_specimen_row(
         clean_cell(nested_get(effective, "material.steel")),
         clean_cell(nested_get(effective, "material.concrete")),
         clean_cell(effective.get("loading_mode")),
-        clean_cell(effective.get("condition")),
+        condition_tags_cell(effective.get("condition")),
+        clean_cell(nested_get(effective, "condition.notes")),
     ]
     return row, missing_effective_fields(effective)
 
@@ -198,8 +216,8 @@ def read_rows_from_json(json_path: Path) -> tuple[list[list[str]], list[str], li
 
     if not isinstance(payload, dict):
         return rows, [f"{json_path}: top-level JSON value is not an object"], warnings
-    if payload.get("schema_version") != "2.0.0-draft":
-        return rows, [f"{json_path}: not a CFST schema 2.0.0-draft output"], warnings
+    if payload.get("schema_version") != SCHEMA_VERSION:
+        return rows, [f"{json_path}: not a CFST schema {SCHEMA_VERSION} output"], warnings
 
     paper = payload.get("paper")
     if not isinstance(paper, dict):
