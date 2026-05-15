@@ -116,6 +116,7 @@ Execution constraints:
 - Write exactly one JSON file to `output_json_path`.
 - Run `validation_command` exactly as given after writing JSON.
 - Use `sandbox_command_prefix` only for child-skill sandbox helpers.
+- For key information, derive it step by step from the available evidence before writing the final JSON.
 - Return sandbox path, mount, or startup failures to the parent.
 - Report undocumented validator rules as `documentation_validator_mismatch`.
 
