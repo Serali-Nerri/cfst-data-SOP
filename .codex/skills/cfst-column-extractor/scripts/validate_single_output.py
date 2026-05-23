@@ -15,7 +15,7 @@ from typing import Any
 
 
 GROUP_ORDER = ("Group_A", "Group_B", "Group_C", "Group_D")
-SCHEMA_VERSION = "3.0"
+SCHEMA_VERSION = "3.1"
 
 PAPER_KEYS = {
     "ref_info",
@@ -83,14 +83,23 @@ CONDITION_TAG_PATTERN = re.compile(
 CORROSION_TAG_PATTERN = re.compile(r"^corrosion_([0-9]+(?:\.[0-9]+)?)%$")
 RATIO_TAG_PATTERN = re.compile(r"^(preload|sustained_load|initial_stress)_([0-9]+(?:\.[0-9]+)?)$")
 ROUNDED_NOTE_PATTERN = re.compile(r"(rounded|round[- ]?corner|corner radius|圆角)", re.IGNORECASE)
-LOCAL_NOTE_SOURCE_PATTERN = re.compile(
+LOCAL_NOTE_HARD_SOURCE_PATTERN = re.compile(
     r"("
     r"\b(?:source|evidence|quote|quoted|table|figure|fig\.)\b"
     r"|source\s+S\d+\b|\bS\d+\s+(?:reports|states|lists|gives)\b"
     r"|source_id|data_sources"
-    r"|derived\s+from|derivation|calculated\s+from|computed\s+from|converted\s+from"
-    r"|表\s*\d+|图\s*\d+|来源|证据|引用|引文|原文|推导|换算"
+    r"|表\s*\d+|图\s*\d+|来源|证据|引用|引文|原文"
     r")",
+    re.IGNORECASE,
+)
+LOCAL_NOTE_DERIVATION_PATTERN = re.compile(
+    r"(derived\s+from|derivation|calculated\s+from|computed\s+from|converted\s+from"
+    r"|推导|换算)",
+    re.IGNORECASE,
+)
+L_METHODOLOGY_PATTERN = re.compile(
+    r"(?:\blevel\s+L[1-4]\b|\bK\s*=\s*[0-9.]+|\bL_geo\b|\bLe\b|\bL0\b"
+    r"|有效长度|计算长度)",
     re.IGNORECASE,
 )
 EPS = 1e-3
@@ -215,7 +224,14 @@ def _validate_string_or_null(value: Any, tag: str, ctx: ValidationContext) -> No
 
 def _validate_local_exception_note(value: Any, tag: str, ctx: ValidationContext) -> None:
     _validate_string_or_null(value, tag, ctx)
-    if isinstance(value, str) and LOCAL_NOTE_SOURCE_PATTERN.search(value):
+    if not isinstance(value, str):
+        return
+    if LOCAL_NOTE_HARD_SOURCE_PATTERN.search(value):
+        ctx.error(
+            f"`{tag}` must only describe a local exception; put source names, quotes, and derivation basis in paper-level fields."
+        )
+        return
+    if LOCAL_NOTE_DERIVATION_PATTERN.search(value) and not L_METHODOLOGY_PATTERN.search(value):
         ctx.error(
             f"`{tag}` must only describe a local exception; put source names, quotes, and derivation basis in paper-level fields."
         )
@@ -846,6 +862,46 @@ def _validate_group(
     return len(specimens)
 
 
+def _collect_methodology_notes(payload: Any) -> list[str]:
+    notes: list[str] = []
+    if not isinstance(payload, dict):
+        return notes
+    paper = payload.get("paper")
+    if isinstance(paper, dict):
+        paper_notes = paper.get("notes")
+        if _nonempty_string(paper_notes):
+            notes.append(paper_notes)
+    for group_key in GROUP_ORDER:
+        group = payload.get(group_key)
+        if not isinstance(group, dict):
+            continue
+        gnote = group.get("note")
+        if _nonempty_string(gnote):
+            notes.append(gnote)
+        specimens = group.get("specimens")
+        if not isinstance(specimens, list):
+            continue
+        for specimen in specimens:
+            if isinstance(specimen, dict):
+                snote = specimen.get("note")
+                if _nonempty_string(snote):
+                    notes.append(snote)
+    return notes
+
+
+def _check_l_methodology(payload: Any, ctx: ValidationContext, total: int) -> None:
+    if total <= 0:
+        return
+    notes = _collect_methodology_notes(payload)
+    if any(L_METHODOLOGY_PATTERN.search(note) for note in notes):
+        return
+    ctx.warning(
+        "L methodology phrase not found in paper.notes / Group_X.note / specimen note. "
+        "Document the basis for L using a `level L1`-`L4` marker or `K=<value>` token; "
+        "see extraction-rules.md section 4."
+    )
+
+
 def validate_semantics(
     payload: Any,
     expect_valid: bool | None,
@@ -874,6 +930,9 @@ def validate_semantics(
         ctx.error("`paper.validity.is_valid=true` requires at least one extracted specimen.")
     if is_valid is False and total > 0:
         ctx.error("`paper.validity.is_valid=false` requires all specimen lists to be empty.")
+
+    if is_valid is True:
+        _check_l_methodology(payload, ctx, total)
 
     return ctx.errors, ctx.warnings, total
 

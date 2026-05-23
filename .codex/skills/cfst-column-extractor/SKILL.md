@@ -1,6 +1,6 @@
 ---
 name: cfst-column-extractor
-description: Use only when explicitly specified by the user; extract one Pending paper package into CFST schema 3.0 JSON.
+description: Use only when explicitly specified by the user; extract one Pending paper package into CFST schema 3.1 JSON.
 ---
 
 # CFST Column Extractor

@@ -50,7 +50,7 @@ this contract and the validator.
 
 ```json
 {
-  "schema_version": "3.0",
+  "schema_version": "3.1",
   "paper": {
     "ref_info": {
       "title": "Paper title",
@@ -89,7 +89,7 @@ this contract and the validator.
       "loading_mode": "The same loading mode applies to all retained specimens.",
       "material": "The same steel and concrete material categories apply to all retained specimens."
     },
-    "notes": null
+    "notes": "L = 0.5 × clear height; fix-fix end plates (level L3)."
   },
   "Group_A": {"shared": {}, "specimens": [], "note": null},
   "Group_B": {"shared": {}, "specimens": [], "note": null},
@@ -243,7 +243,7 @@ under groups or specimens. All source information belongs under `paper`.
 
 Top-level object:
 
-- `schema_version` is required and MUST be exactly `"3.0"`.
+- `schema_version` is required and MUST be exactly `"3.1"`.
 - `paper`, `Group_A`, `Group_B`, `Group_C`, and `Group_D` are required objects.
 
 `paper`:
@@ -423,6 +423,14 @@ Use `r_ratio = 0` when recycled aggregate is not applicable or not reported.
 
 Because eccentricity is a group/specimen experimental variable, write `e1` and
 `e2` in group `shared` or specimens, not in `paper.defaults`.
+
+`L` is the **effective (calculation) length** that governs the stability
+capacity associated with `n_exp`, not necessarily the geometric specimen
+length. See `extraction-rules.md` section 4 for the L1–L4 priority ladder, the
+K factor table, and the methodology note placement. Every valid paper MUST
+document its L methodology in at least one of `paper.notes`, `Group_X.note`,
+or specimen `note`, using a phrase that includes a `level L1`–`L4` marker or a
+`K=<value>` token.
 
 Each `specimen_label` MUST be unique across all groups.
 
@@ -627,6 +635,13 @@ group or specimen notes. The validator rejects obvious source/derivation wording
 in group or specimen notes, including table or figure names, source identifiers,
 quotes, and conversion/derivation phrases.
 
+Explicit exception: **L methodology phrases** are allowed in `paper.notes`,
+group `note`, and specimen `note`. A phrase qualifies as L methodology when it
+contains a `level L1` / `L2` / `L3` / `L4` marker, a `K=<value>` token, or a
+baseline-length reference (`L_geo`, `L0`, `Le`). Use the templates in
+`extraction-rules.md` section 4. Source identifiers (table / figure / `S\d+`
+/ `源` / `表` / `图`) remain disallowed even inside an L methodology note.
+
 ## Normalized Enumerations
 
 `paper.data_sources[*].type` values:
@@ -677,7 +692,7 @@ from `Group_C.shared`; specimen rows supply values that vary.
 
 ```json
 {
-  "schema_version": "3.0",
+  "schema_version": "3.1",
   "paper": {
     "ref_info": {
       "title": "钢管高强混凝土轴压力学性能的理论分析与试验研究",
@@ -706,7 +721,7 @@ from `Group_C.shared`; specimen rows supply values that vary.
       "loading_mode": "Source S2 identifies axial monotonic compression.",
       "material": "Source S1 reports steel tubes and high-strength concrete."
     },
-    "notes": null
+    "notes": "L = Le as reported (level L1)."
   },
   "Group_A": {"shared": {}, "specimens": [], "note": null},
   "Group_B": {"shared": {}, "specimens": [], "note": null},
@@ -761,7 +776,7 @@ validator-valid invalid output:
 
 ```json
 {
-  "schema_version": "3.0",
+  "schema_version": "3.1",
   "paper": {
     "ref_info": {
       "title": "Example Paper Without Extractable CFST Column Tests",
@@ -787,7 +802,7 @@ validator-valid invalid output:
 
 ## Pre-Validation Checklist
 
-- `schema_version` is `3.0`.
+- `schema_version` is `3.1`.
 - Top-level keys are exactly `schema_version`, `paper`, `Group_A`, `Group_B`,
   `Group_C`, and `Group_D`.
 - No `section_groups`, `paper_evidence`, `source_locations`, or
@@ -808,3 +823,6 @@ validator-valid invalid output:
   with a rounded-corner note have `r0>0`.
 - Circular and round-ended rows use `r0 = h / 2`.
 - Numeric values are JSON numbers rounded to 0.001 precision.
+- `L` is the effective (calculation) length per `extraction-rules.md` section
+  4; the L methodology (level L1–L4 marker or K=<value> token) is documented in
+  at least one of `paper.notes`, `Group_X.note`, or specimen `note`.

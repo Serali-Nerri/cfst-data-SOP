@@ -15,7 +15,7 @@
   "properties": {
     "schema_version": {
       "type": "string",
-      "const": "3.0"
+      "const": "3.1"
     },
     "paper": {
       "$ref": "#/$defs/paper"
