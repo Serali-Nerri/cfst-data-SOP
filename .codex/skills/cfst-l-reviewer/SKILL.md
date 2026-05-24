@@ -94,8 +94,14 @@ return `input_contract_failure`.
 
 ## Output Format
 
+Write `review.md` in **Chinese**. The five level-2 headers, verdict tokens
+(`OK` / `CHANGE` / `UNDETERMINED`), and the summary keys (`reviewed`, `OK`,
+`CHANGE`, `UNDETERMINED`) must stay in the exact English form shown below —
+they are the validator's structural anchors. All surrounding narrative,
+reasons, methodology paragraphs, and table cell prose should be in Chinese.
+
 `review.md` must contain exactly these five level-2 headers, in this order,
-with these exact titles (they are the validator's structural anchors):
+with these exact titles:
 
 ```
 ## 1. Source identification
