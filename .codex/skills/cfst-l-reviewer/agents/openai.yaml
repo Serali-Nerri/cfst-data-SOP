@@ -1,0 +1,4 @@
+interface:
+  display_name: "CFST L Reviewer"
+  short_description: "Review one paper's L values against the effective-length definition"
+  default_prompt: "Use $cfst-l-reviewer to review the L column of one paper's previously extracted CSV against the effective-length definition, writing a review.md with per-specimen OK/CHANGE/UNDETERMINED verdicts and an optional recommended CSV containing only the CHANGE rows."

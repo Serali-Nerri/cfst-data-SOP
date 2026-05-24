@@ -1,0 +1,4 @@
+interface:
+  display_name: "CFST L Review Orchestrator"
+  short_description: "Orchestrate batch L review across pre-extracted CFST paper packages"
+  default_prompt: "Use $cfst-l-review-orchestrator to scan a caller-provided L-review Pending root, build per-paper worker_job_spec.json and worker_brief.md files for $cfst-l-reviewer, launch isolated workers, track retries/state, publish validated review.md outputs (with optional recommended CSVs), and aggregate a cross-paper L-review summary."
