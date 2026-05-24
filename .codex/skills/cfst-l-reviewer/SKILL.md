@@ -118,7 +118,7 @@ Minimum content per section:
 - **2. L methodology for this paper** — natural-language paragraph(s) stating end-condition family, the length source the paper itself uses, and any coefficients explicitly excluded from `L`. Split per group if methodology differs.
 - **3. Per-specimen review** — covers **every** specimen in the CSV. Each specimen has a verdict from `{OK, CHANGE, UNDETERMINED}` (uppercase) and a short reason. `CHANGE` rows must include a `recommended L (mm)` numeric value.
 - **4. Summary** — at least four numeric values: `reviewed`, `OK`, `CHANGE`, `UNDETERMINED`. The three verdicts must sum to `reviewed`. Place each count on the same line as its key (e.g. `reviewed: 27`, `| OK | 22 |`, `- CHANGE = 5`).
-- **5. Recommended replacement** — if any `CHANGE` row exists, list affected specimens with `original L` and `recommended L`. If none, write a single line such as `No specimens require change.` The companion CSV at `recommended_csv_path` carries the same rows in machine-readable form.
+- **5. Recommended replacement** — if any `CHANGE` row exists, list affected specimens with `original L` and `recommended L`. If none, write a single line such as `No specimens require change.` The companion CSV at `recommended_csv_path` carries the same rows in machine-readable form; it must preserve the input CSV's header verbatim and use the same delimiter and text encoding (the input may be tab- or comma-separated, possibly with a UTF-8 BOM).
 
 ## Boundaries
 

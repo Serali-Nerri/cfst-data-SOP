@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import csv
+import io
 import json
 import os
 import re
@@ -110,10 +111,14 @@ def inspect_l_review_package(package_dir: Path, paper_id: str) -> dict[str, Any]
         issues.append("unreplaced_html_tables_in_full_md")
     if extracted_csv.is_file():
         try:
-            with extracted_csv.open(encoding="utf-8") as handle:
-                reader = csv.reader(handle, delimiter="\t")
-                header = next(reader, None)
-                first_row = next(reader, None)
+            text = extracted_csv.read_text(encoding="utf-8-sig")
+            first_line = text.split("\n", 1)[0]
+            counts = {delim: first_line.count(delim) for delim in (",", "\t", ";")}
+            best = max(counts, key=counts.__getitem__)
+            delimiter = best if counts[best] > 0 else ","
+            reader = csv.reader(io.StringIO(text), delimiter=delimiter)
+            header = next(reader, None)
+            first_row = next(reader, None)
             if not header or "Specimen" not in header:
                 issues.append("extracted_csv_missing_specimen_column")
             if first_row is None:
