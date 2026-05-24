@@ -89,7 +89,7 @@ this contract and the validator.
       "loading_mode": "The same loading mode applies to all retained specimens.",
       "material": "The same steel and concrete material categories apply to all retained specimens."
     },
-    "notes": "L = 0.5 × clear height; fix-fix end plates (level L3)."
+    "notes": "L taken as the paper's specimen length; pin-pin axial compression with end plates acting as rigid load-transfer devices."
   },
   "Group_A": {"shared": {}, "specimens": [], "note": null},
   "Group_B": {"shared": {}, "specimens": [], "note": null},
@@ -426,11 +426,11 @@ Because eccentricity is a group/specimen experimental variable, write `e1` and
 
 `L` is the **effective (calculation) length** that governs the stability
 capacity associated with `n_exp`, not necessarily the geometric specimen
-length. See `extraction-rules.md` section 4 for the L1–L4 priority ladder, the
-K factor table, and the methodology note placement. Every valid paper MUST
-document its L methodology in at least one of `paper.notes`, `Group_X.note`,
-or specimen `note`, using a phrase that includes a `level L1`–`L4` marker or a
-`K=<value>` token.
+length. See `effective-length-rules.md` for the scope carve-out (what `L`
+carries and does not carry), the thinking hooks, and the methodology note
+placement. Every valid paper MUST document its L methodology in at least one
+of `paper.notes`, `Group_X.note`, or specimen `note`, in a natural-language
+phrase that names the end-condition family and the chosen length source.
 
 Each `specimen_label` MUST be unique across all groups.
 
@@ -636,11 +636,14 @@ in group or specimen notes, including table or figure names, source identifiers,
 quotes, and conversion/derivation phrases.
 
 Explicit exception: **L methodology phrases** are allowed in `paper.notes`,
-group `note`, and specimen `note`. A phrase qualifies as L methodology when it
-contains a `level L1` / `L2` / `L3` / `L4` marker, a `K=<value>` token, or a
-baseline-length reference (`L_geo`, `L0`, `Le`). Use the templates in
-`extraction-rules.md` section 4. Source identifiers (table / figure / `S\d+`
-/ `源` / `表` / `图`) remain disallowed even inside an L methodology note.
+group `note`, and specimen `note`. A phrase qualifies as L methodology when
+it describes both the **end-condition family** (pin-pin, knife-edge, fix-fix,
+fix-pin, cantilever, 刀铰, 铰支, 固支, 悬臂, etc.) and the **chosen length
+source** (effective length, pin-to-pin distance, specimen length, geometric
+fallback, 有效长度, 计算长度, 等效长度, 试件长度, etc.). See
+`effective-length-rules.md` for guidance. Source identifiers (table / figure
+/ `S\d+` / 源 / 表 / 图) remain disallowed even inside an L methodology
+note.
 
 ## Normalized Enumerations
 
@@ -721,7 +724,7 @@ from `Group_C.shared`; specimen rows supply values that vary.
       "loading_mode": "Source S2 identifies axial monotonic compression.",
       "material": "Source S1 reports steel tubes and high-strength concrete."
     },
-    "notes": "L = Le as reported (level L1)."
+    "notes": "L taken as the effective length reported by the paper; pin-pin axial compression."
   },
   "Group_A": {"shared": {}, "specimens": [], "note": null},
   "Group_B": {"shared": {}, "specimens": [], "note": null},
@@ -823,6 +826,7 @@ validator-valid invalid output:
   with a rounded-corner note have `r0>0`.
 - Circular and round-ended rows use `r0 = h / 2`.
 - Numeric values are JSON numbers rounded to 0.001 precision.
-- `L` is the effective (calculation) length per `extraction-rules.md` section
-  4; the L methodology (level L1–L4 marker or K=<value> token) is documented in
-  at least one of `paper.notes`, `Group_X.note`, or specimen `note`.
+- `L` is the effective (calculation) length per `effective-length-rules.md`;
+  the L methodology (end-condition family and chosen length source) is
+  documented in at least one of `paper.notes`, `Group_X.note`, or specimen
+  `note`.

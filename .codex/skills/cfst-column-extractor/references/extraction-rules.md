@@ -76,7 +76,7 @@ Parameters to extract:
 | H   | `h`              | mm   | Section outer depth or height |
 | I   | `t`              | mm   | Steel tube wall thickness |
 | J   | `r0`             | mm   | Outer corner radius; see `section_shapes.jpg` and section 4 |
-| K   | `L`              | mm   | Effective length governing stability of `n_exp`; see section 4 for priority and K table |
+| K   | `L`              | mm   | Effective length governing stability of `n_exp`; see section 4 for definition, scope carve-out, and methodology hooks |
 | L   | `e1`             | mm   | Eccentricity at the upper end; 0 for axial loading |
 | M   | `e2`             | mm   | Eccentricity at the lower end; 0 for axial loading |
 | N   | `n_exp`          | kN   | Experimental ultimate load capacity |
@@ -170,91 +170,17 @@ For `Group_D` round-ended sections:
 
 `L`:
 
-Determine `L` as the **effective (calculation) length** that governs the
-stability capacity associated with `n_exp`. `L` is not necessarily the physical
-specimen length; when end fittings or boundary conditions modify the equivalent
-length, `L` must reflect that correction.
+`L` is the **effective length governing the stability behavior associated
+with `n_exp`** — the equivalent unbraced length that, paired with the
+section properties, drives the column's actual ultimate capacity. `L` is
+rarely the bare steel-tube length; it reflects how the real column actually
+buckles under its real end devices and loading.
 
-### L extraction priority (top-down, first-match wins)
-
-| Level | Evidence | L value |
-| ----- | -------- | ------- |
-| L1 | Paper explicitly reports effective / calculation length (`Le`, `L_e`, "有效长度", "计算长度") | Use the reported value directly |
-| L2 | Paper provides `Le = K · L0` (or equivalent formula) with both K and L0 recoverable | `L = K × L0`, computed via `scripts/safe_calc.py` |
-| L3 | Paper provides an unbraced length plus identifiable end conditions (text statement or test-setup figure) | `L = K × L_unbraced`, with K from the table below |
-| L4 | Fallback: no end-fixture correction, no identifiable boundary condition, and no length-related formula | `L = L_geo` (geometric specimen length) |
-
-For L3, the unbraced length is the distance between rotation-restraint points
-(pin-to-pin centers, end-plate inner faces, or the steel-tube clear height when
-the figure makes that geometry clear).
-
-### Boundary condition → K factor table
-
-Use these theoretical K values unless the paper explicitly states a different
-code-modified K. When the paper gives its own K, use the paper's value and
-record it in the methodology note.
-
-| End condition | Short form | K |
-| ------------- | ---------- | --- |
-| Both ends pinned (pin / spherical hinge / freely rotating end) | pin-pin | 1.0 |
-| One end fixed, one end pinned | fix-pin | 0.7 |
-| Both ends fixed (welded end plates with full rotation restraint) | fix-fix | 0.5 |
-| One end fixed, one end free (cantilever) | fix-free | 2.0 |
-| Knife edge at both ends (eccentric-load tests, pinned about the loading axis) | knife-edge | 1.0 |
-| End plate + stiffening sleeve (semi-rigid) | semi-rigid | 0.7 |
-| Asymmetric end combinations | combine from rows above | per pairing |
-
-Evidence priority for end conditions: **paper formula > test-setup figure >
-text description > same-group convention** (the last is weak evidence and must
-be flagged in the methodology note).
-
-### Reverse derivation and consistency check
-
-When the paper reports slenderness `λ` and radius of gyration `i`, compute
-`Le_check = λ × i` and compare with the L3 lookup value. Differences ≤ 5% are
-consistent; if the difference exceeds 5%, prefer the paper-derived value.
-
-If the paper reports an L/D ratio, slenderness, or other length-derived
-quantity, re-evaluate which level applies according to that quantity's internal
-definition; do not apply the K table mechanically.
-
-### Fallback boundary (L4)
-
-`L4` is allowed only when **all** of the following hold:
-
-1. The paper does not report `Le` or `K`.
-2. The test-setup figure is missing or cannot identify the end condition.
-3. The specimen end is a simple flat bearing plate or has no fixture correction.
-4. The fallback is explicitly recorded in the methodology note.
-
-Short / stub columns (L/D ≤ 4) commonly fall here, but must still go through
-condition 4 — fallback is never implicit.
-
-### Methodology note (required placement)
-
-Record the L methodology once per scope at the matching level. Notes must be a
-single short clause; do not quote sources.
-
-| Scope | Location |
-| ----- | -------- |
-| One L methodology shared by the whole paper | `paper.notes` |
-| Different K per group (e.g. boundary-condition comparison studies) | `Group_X.note` |
-| One specimen deviates from its group methodology | specimen `note` |
-
-L methodology phrases are an explicit allowed exception to the "no derivation
-phrases in group/specimen note" rule in section 9. Use the templates below.
-
-Recommended templates (one line, no source quotes):
-
-- `L = Le as reported (level L1).`
-- `L = K × L0 = 0.7 × 1500 = 1050 mm (level L2).`
-- `L = 0.5 × 1200 = 600 mm; fix-fix (level L3).`
-- `L = L_geo = 800 mm; no end-fixture correction (level L4 fallback).`
-
-### Non-recoverable
-
-If even the geometric length cannot be recovered, treat the row as not
-recoverable under section 10.
+See `effective-length-rules.md` for the scope carve-out (what `L` carries
+and does not carry), the thinking hooks for multi-length papers and end
+devices, physical-intuition background, the fallback boundary, the
+non-recoverable case, and the required methodology-note placement and
+phrasing.
 
 ## 5. Eccentricity Rules
 
@@ -418,12 +344,14 @@ source or derivation evidence. Obvious table/figure/source identifiers, quotes,
 or conversion/derivation phrases in group or specimen notes are validation
 errors.
 
-Explicit exception: **L methodology phrases** (the level marker `level L1` /
-`L2` / `L3` / `L4`, the K factor `K=<value>`, and the baseline-length reference
-such as `L_geo`, `L0`, `Le`) are allowed in group / specimen / paper notes,
-because the L methodology is itself a local data exception. See section 4 for
-the recommended templates. Source identifiers (table / figure / `S\d+` /
-`source` / `表` / `图`) remain disallowed even within an L methodology note.
+Explicit exception: **L methodology phrases** are allowed in group / specimen
+/ paper notes, because the L methodology is itself a local data exception.
+A qualifying phrase describes the **end-condition family** (pin-pin, fix-fix,
+fix-pin, knife-edge, cantilever, 铰支, 固支, 刀铰, 悬臂, etc.) and the
+**chosen length source** (effective length, pin-to-pin distance, specimen
+length, geometric fallback, 有效长度, 计算长度, 等效长度, 试件长度, etc.).
+See section 4. Source identifiers (table / figure / `S\d+` / 表 / 图) remain
+disallowed even within an L methodology note.
 
 All extracted numeric fields must be JSON numbers, not strings. Under
 `--strict-rounding`, numeric values must be rounded to no more than 0.001

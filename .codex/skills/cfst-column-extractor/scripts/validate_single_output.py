@@ -98,8 +98,12 @@ LOCAL_NOTE_DERIVATION_PATTERN = re.compile(
     re.IGNORECASE,
 )
 L_METHODOLOGY_PATTERN = re.compile(
-    r"(?:\blevel\s+L[1-4]\b|\bK\s*=\s*[0-9.]+|\bL_geo\b|\bLe\b|\bL0\b"
-    r"|有效长度|计算长度)",
+    r"\b(?:effective|unbraced|calculation|geometric|specimen|pin[- ]to[- ]pin)\s+length\b"
+    r"|\b(?:pin[- ]?pin|fix[- ]?fix|fix[- ]?pin|knife[- ]?edge|cantilever)\b"
+    r"|\b(?:rotation|rotational)\s+(?:restraint|axis|point)s?\b"
+    r"|\bL\s*=\s*"
+    r"|有效长度|计算长度|等效长度|试件长度|无支撑长度|销轴间距|几何长度"
+    r"|两端铰|两端固|一端固|刀铰|悬臂|球铰|铰支|固支",
     re.IGNORECASE,
 )
 EPS = 1e-3
@@ -897,8 +901,10 @@ def _check_l_methodology(payload: Any, ctx: ValidationContext, total: int) -> No
         return
     ctx.warning(
         "L methodology phrase not found in paper.notes / Group_X.note / specimen note. "
-        "Document the basis for L using a `level L1`-`L4` marker or `K=<value>` token; "
-        "see extraction-rules.md section 4."
+        "Document how L was determined: name the end-condition family (pin-pin, fix-fix, "
+        "knife-edge, 刀铰, 铰支, etc.) and the chosen length source (effective length, "
+        "specimen length, pin-to-pin distance, geometric fallback, 有效长度, 计算长度, "
+        "etc.); see extraction-rules.md section 4."
     )
 
 

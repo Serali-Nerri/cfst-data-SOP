@@ -13,6 +13,7 @@ Treat this file and these resources as the complete one-paper extraction contrac
 
 - `references/extraction-rules.md`: extraction scope and field rules for all CFST column ultimate-capacity data
 - `references/fc-basis-rules.md`: decision framework for `fco` and `fc_type`
+- `references/effective-length-rules.md`: decision framework for the `L` effective-length field
 - `references/section_shapes.jpg`: visual reference for `Group_A-D` section groups and `r0`
 - `references/biaxial_eccentricity.png`: visual reference for biaxial eccentricity resultants
 - `references/JSON_contract.md`: authoritative human-readable JSON authoring contract, including validator-equivalent writing rules
@@ -64,7 +65,7 @@ For package sources, the only allowed derived paths are the fixed members under 
 
 ## Workflow
 
-1. Read `references/extraction-rules.md`, `references/fc-basis-rules.md`, and `references/JSON_contract.md`; view `references/section_shapes.jpg` before assigning section groups or `r0`.
+1. Read `references/extraction-rules.md`, `references/fc-basis-rules.md`, `references/effective-length-rules.md`, and `references/JSON_contract.md`; view `references/section_shapes.jpg` before assigning section groups or `r0`.
 2. Verify the caller-provided input contract.
    - Confirm `package_dir` is a prepared package containing `full.md`, `images/`, and `content_list_v2.json`.
    - Confirm `owned_pdf_path` refers to the owned fallback PDF for the same prepared package.
@@ -72,11 +73,12 @@ For package sources, the only allowed derived paths are the fixed members under 
 3. Collect evidence using `Source Handling`: start from usable `<package_dir>/full.md`, open only relevant referenced images under `<package_dir>/images/`, and use PDF rendering only for fallback or conflict resolution.
 4. Apply `references/extraction-rules.md` for target scope, required fields, geometry/eccentricity/material/loading/condition rules, source/numeric rules, and invalid or failed extraction handling.
 5. Apply `references/fc-basis-rules.md` when resolving `fco` and `fc_type`.
-6. Use `references/section_shapes.jpg` before assigning section groups or `r0`.
-7. Use `scripts/safe_calc.py` through `sandbox_command_prefix` for every unit conversion or derived value.
-8. Apply `references/JSON_contract.md` for JSON shape, allowed keys, inheritance, notes, numeric precision, normalized values, and validation-equivalent writing rules.
-9. Write one JSON file to `output_json_path`, then run `validation_command`.
-10. If validation fails for a documented JSON/data rule, repair the same JSON once and rerun the same validation command. If sandbox execution fails or the validator enforces an undocumented rule, stop with the matching structured status below.
+6. Apply `references/effective-length-rules.md` when resolving `L`.
+7. Use `references/section_shapes.jpg` before assigning section groups or `r0`.
+8. Use `scripts/safe_calc.py` through `sandbox_command_prefix` for every unit conversion or derived value.
+9. Apply `references/JSON_contract.md` for JSON shape, allowed keys, inheritance, notes, numeric precision, normalized values, and validation-equivalent writing rules.
+10. Write one JSON file to `output_json_path`, then run `validation_command`.
+11. If validation fails for a documented JSON/data rule, repair the same JSON once and rerun the same validation command. If sandbox execution fails or the validator enforces an undocumented rule, stop with the matching structured status below.
 
 ## Validation Command
 
